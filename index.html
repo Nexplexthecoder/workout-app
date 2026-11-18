@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f7f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111113" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Workout">
+<title>Workout</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ff5a1f'/%3E%3Cpath d='M14 26h6v12h-6zM44 26h6v12h-6zM20 22h5v20h-5zM39 22h5v20h-5zM25 30h14v4H25z' fill='white'/%3E%3C/svg%3E">
+<script>
+/* ===== CONFIG: GitHub repo that receives feedback issues (OWNER/REPO) ===== */
+const FEEDBACK_REPO = 'Nexplexthecoder/workout-app';
+const APP_VERSION = '1.0.0';
+</script>
+<style>
+:root{--bg:#f7f7f8;--card:#fff;--fg:#111113;--mut:#6b6b73;--line:#e6e6ea;--acc:#ff5a1f;--accs:#ff5a1f1a;--ok:#16a34a;--r:16px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#111113;--card:#1c1c1f;--fg:#f2f2f4;--mut:#9a9aa3;--line:#2c2c31;--accs:#ff5a1f26}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-size:16px;line-height:1.4;min-height:100vh;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:calc(14px + env(safe-area-inset-top)) 20px 10px}
+header h1{font-size:28px;margin:0;font-weight:700;letter-spacing:-.02em}
+main{padding:4px 16px 24px;max-width:560px;margin:0 auto}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin:0 0 12px;border:1px solid var(--line)}
+.mut{color:var(--mut)} .small{font-size:13px} .row{display:flex;align-items:center;gap:10px} .sp{flex:1}
+.btn{appearance:none;border:0;border-radius:12px;min-height:48px;padding:0 18px;font:inherit;font-weight:600;background:var(--line);color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn svg{width:20px;height:20px;flex:none}
+.ic.r{opacity:.55}
+.btn.p{background:var(--acc);color:#fff} .btn.w{width:100%} .btn.g{background:transparent;color:var(--acc);padding:0 8px} .btn.d{color:#e5484d;background:transparent}
+.btn.s{min-height:36px;padding:0 12px;font-size:14px;border-radius:10px}
+.ib{appearance:none;border:0;background:transparent;color:var(--fg);width:44px;height:44px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ib svg,.tab svg{width:24px;height:24px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;appearance:none;border:0;background:none;color:var(--mut);font:inherit;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 10px;min-height:60px;cursor:pointer}
+.tab.on{color:var(--acc)}
+.list .it{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);min-height:56px}
+.list .it:last-child{border-bottom:0}
+.it .t{font-weight:600} .tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--accs);color:var(--acc);font-weight:600}
+label.f{display:block;margin:0 0 12px} label.f>span{display:block;font-size:13px;color:var(--mut);margin:0 0 6px;font-weight:600}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:12px;min-height:48px;padding:10px 12px;width:100%}
+textarea{min-height:90px;resize:vertical}
+input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--acc)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px} .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--mut);min-height:40px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--fg);box-shadow:0 1px 3px #0002}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:14px;font-weight:600;min-width:44px;min-height:40px;border-radius:99px;padding:0 12px;cursor:pointer}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.big{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:2px 0 4px}
+.stat{display:flex;gap:12px} .stat>div{flex:1} .stat b{font-size:24px;display:block}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.week .d{padding:8px 0;border-radius:12px;font-size:12px;color:var(--mut)}
+.week .d b{display:block;font-size:16px;color:var(--fg);margin:2px 0}
+.week .d.today{background:var(--accs)}
+.ic{display:inline-flex;width:18px;height:18px;align-items:center;justify-content:center;vertical-align:middle}
+.ic svg{width:16px;height:16px}
+.ic.w{color:var(--acc)} .ic.c{color:#d9a400} .ic.r{color:var(--mut)} .ic.ok{color:var(--ok)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal .h{font-size:12px;color:var(--mut);font-weight:600;padding:4px 0}
+.cal button{border:0;background:none;color:var(--fg);font:inherit;border-radius:12px;padding:6px 0 4px;min-height:52px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.cal button.o{opacity:.35} .cal button.today{background:var(--accs);font-weight:700}
+.cal button.chg{box-shadow:inset 0 -3px 0 var(--acc)}
+.cal .n{font-size:15px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--mut);margin-top:10px}
+.sheet-bg{position:fixed;inset:0;background:#0007;z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
+.sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:8px 18px calc(18px + env(safe-area-inset-bottom));animation:up .2s ease-out}
+.sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 10px}
+.sheet h2{margin:0 0 14px;font-size:20px}
+@keyframes up{from{transform:translateY(40px);opacity:.5}} @keyframes fade{from{opacity:0}}
+.vid{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;margin:0 0 12px}
+.vid iframe,.vid video{position:absolute;inset:0;width:100%;height:100%;border:0}
+.handle{touch-action:none;cursor:grab;color:var(--mut)}
+.dragging{opacity:.6;background:var(--accs);border-radius:12px}
+.wo{position:fixed;inset:0;z-index:15;background:var(--bg);overflow:auto;padding:calc(12px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom))}
+.setrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.setbtn{width:52px;height:52px;border-radius:50%;border:2px solid var(--line);background:none;color:var(--fg);font:inherit;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.setbtn.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.timer{font-size:56px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.prog{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin:6px 0 16px} .prog i{display:block;height:100%;background:var(--acc)}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:40;max-width:90%;text-align:center}
+.banner{background:var(--accs);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:8px}
+.empty{text-align:center;color:var(--mut);padding:28px 10px}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:18px 4px 8px}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header><h1 id="title">Today</h1><div id="hdr"></div></header>
+<main id="main"></main>
+<nav class="tabs" id="tabs"></nav>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<script>
+'use strict';
+/* ---------- icons ---------- */
+const I={
+ today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+ cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
+ list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
+ db:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8v8M3.5 10v4M18 8v8M20.5 10v4M6 12h12"/></svg>',
+ more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+ plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+ play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>',
+ up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 15l6-6 6 6"/></svg>',
+ down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
+ x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ grip:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+ w:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 8v8M3.5 10v4M18 8v8M20.5 10v4M6 12h12"/></svg>',
+ r:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
+ c:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 3 20.5c6 2 12 2 18 0z" opacity=".9"/><circle cx="10" cy="13" r="1.4" fill="var(--card)"/><circle cx="14" cy="16" r="1.4" fill="var(--card)"/></svg>',
+ ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ video:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3z"/></svg>',
+};
+const ic=(k,cls)=>`<span class="ic ${cls||k}">${I[k]}</span>`;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+
+/* ---------- dates (local) ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const ds=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addD=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ds(d)};
+const diffD=(a,b)=>Math.round((pd(a)-pd(b))/864e5);
+const todayS=()=>ds(new Date());
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const fmt=(s,o)=>pd(s).toLocaleDateString(undefined,o||{weekday:'short',month:'short',day:'numeric'});
+const nextMonday=()=>{const t=todayS();const wd=pd(t).getDay();return addD(t,((8-wd)%7)||7)};
+
+/* ---------- state ---------- */
+const KEY='workoutPlanner.v1';
+function seed(){
+  const t=todayS();
+  const ex=[
+   {id:'ex_pushup',name:'Push-up',group:'Chest',sets:3,mode:'reps',reps:10,secs:30,weight:'',rest:60,notes:'Body in a straight line, elbows ~45°.',video:{type:'url',url:'https://www.youtube.com/watch?v=IODxDxX7oi4'}},
+   {id:'ex_squat',name:'Bodyweight squat',group:'Legs',sets:3,mode:'reps',reps:15,secs:30,weight:'',rest:60,notes:'Chest up, knees track over toes.',video:{type:'url',url:'https://www.youtube.com/watch?v=aclHkVaku9U'}},
+   {id:'ex_lunge',name:'Lunge',group:'Legs',sets:3,mode:'reps',reps:10,secs:30,weight:'',rest:60,notes:'10 per leg.',video:{type:'url',url:'https://www.youtube.com/watch?v=QOVaHwm-Q6U'}},
+   {id:'ex_plank',name:'Plank',group:'Core',sets:3,mode:'time',reps:10,secs:45,weight:'',rest:45,notes:'Squeeze glutes, don\'t let hips sag.',video:{type:'url',url:'https://www.youtube.com/watch?v=pSHjTRCQxIw'}},
+  ];
+  return {v:1,exercises:ex,
+   routines:[{id:'rt_full',name:'Full Body A',notes:'Example routine — edit or delete it.',video:null,items:ex.map(e=>({exId:e.id}))}],
+   schedule:{mode:'interval',interval:2,start:t,weekdays:[1,3,5],cheatWeekdays:[],cheatDates:[],restDates:[],baseRoutine:'rt_full'},
+   changes:[],history:{},feedbackQueue:[]};
+}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+if(!S||!S.exercises)S=seed();
+S.feedbackQueue=S.feedbackQueue||[];
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Could not save: storage full?')}};
+save();
+const exById=id=>S.exercises.find(e=>e.id===id);
+const rtById=id=>S.routines.find(r=>r.id===id);
+
+/* ---------- IndexedDB for uploaded videos ---------- */
+const VDB={db:null,
+ open(){return this.db?Promise.resolve(this.db):new Promise((res,rej)=>{const q=indexedDB.open('workoutVideos',1);q.onupgradeneeded=()=>q.result.createObjectStore('v');q.onsuccess=()=>{this.db=q.result;res(this.db)};q.onerror=()=>rej(q.error)})},
+ async put(id,blob){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction('v','readwrite');tx.objectStore('v').put(blob,id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})},
+ async get(id){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction('v').objectStore('v').get(id);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
+ async del(id){const db=await this.open();return new Promise(res=>{const tx=db.transaction('v','readwrite');tx.objectStore('v').delete(id);tx.oncomplete=res;tx.onerror=res})}};
+
+/* ---------- schedule logic ---------- */
+function routineFor(d){
+  let r=S.schedule.baseRoutine,best='';
+  for(const c of S.changes) if(c.type==='switch'&&c.date<=d&&c.date>=best){best=c.date;r=c.routineId}
+  return r;
+}
+function dayInfo(d){
+  const sc=S.schedule,wd=pd(d).getDay();
+  const add=S.changes.find(c=>c.type==='add'&&c.date===d);
+  const done=S.history[d];
+  if(add) return {kind:'workout',routineId:add.routineId,extra:true,done};
+  if(sc.cheatDates.includes(d)||sc.cheatWeekdays.includes(wd)) return {kind:'cheat',done};
+  if(sc.restDates.includes(d)) return {kind:'rest',done};
+  let w=false;
+  if(sc.mode==='interval'){const k=diffD(d,sc.start);w=k>=0&&k%Math.max(1,sc.interval)===0}
+  else w=sc.weekdays.includes(wd);
+  if(!w) return {kind:'rest',done};
+  return {kind:'workout',routineId:routineFor(d),done};
+}
+function streak(){
+  let d=todayS(),n=0,i=0;
+  const t=dayInfo(d); if(t.kind==='workout'&&!S.history[d]) d=addD(d,-1);
+  for(;i<400;i++,d=addD(d,-1)){
+    const inf=dayInfo(d);
+    if(S.history[d]){n++;continue}
+    if(inf.kind==='workout')break;
+  }
+  return n;
+}
+function nextWorkout(from){for(let i=1;i<60;i++){const d=addD(from,i);const x=dayInfo(d);if(x.kind==='workout')return {d,...x}}return null}
+const dayIcon=inf=>inf.done?ic('ok'):inf.kind==='workout'?ic('w'):inf.kind==='cheat'?ic('c'):ic('r');
+
+/* ---------- ui helpers ---------- */
+let tab='today';
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2400)}
+function sheet(html,onMount){
+  closeSheet();
+  const bg=document.createElement('div');bg.className='sheet-bg';bg.id='sheet';
+  bg.innerHTML=`<div class="sheet" role="dialog"><div class="grab"></div>${html}</div>`;
+  bg.addEventListener('click',e=>{if(e.target===bg)closeSheet()});
+  document.body.appendChild(bg);onMount&&onMount(bg.firstChild);return bg.firstChild;
+}
+function closeSheet(){const s=$('#sheet');if(s){s.querySelectorAll('video').forEach(v=>v.pause());s.remove()}revokeUrls()}
+let objUrls=[];function revokeUrls(){objUrls.forEach(u=>URL.revokeObjectURL(u));objUrls=[]}
+const prescription=(ex,ov)=>{ov=ov||{};const sets=ov.sets||ex.sets,mode=ex.mode;const amt=mode==='time'?`${ov.secs||ex.secs}s`:`${ov.reps||ex.reps} reps`;return `${sets} × ${amt}${ex.weight?' · '+esc(ex.weight):''}`};
+
+function ytId(u){const m=String(u).match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([\w-]{11})/);return m?m[1]:null}
+async function videoHTML(v){
+  if(!v)return '';
+  if(v.type==='url'&&v.url){
+    const id=ytId(v.url);
+    const offline=!navigator.onLine?'<div class="small mut" style="margin:-6px 0 10px">You\'re offline — online videos need a connection. Uploaded videos work offline.</div>':'';
+    if(id)return `<div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0&playsinline=1" title="How-to video" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>${offline}`;
+    return `<div class="vid"><video src="${esc(v.url)}" controls playsinline preload="metadata"></video></div>${offline}<div class="small"><a href="${esc(v.url)}" target="_blank" rel="noopener">Open link</a></div>`;
+  }
+  if(v.type==='file'&&v.fileId){
+    const b=await VDB.get(v.fileId).catch(()=>null);
+    if(!b)return '<div class="small mut">Video file not found on this device (uploaded videos don\'t transfer in backups).</div>';
+    const u=URL.createObjectURL(b);objUrls.push(u);
+    return `<div class="vid"><video src="${u}" controls playsinline preload="metadata" data-file="1"></video></div>`;
+  }
+  return '';
+}
+async function showVideo(title,v){
+  const s=sheet(`<h2>${esc(title)}</h2><div id="vbox"><div class="mut">Loading…</div></div><button class="btn w" onclick="closeSheet()">Close</button>`);
+  s.querySelector('#vbox').innerHTML=(await videoHTML(v))||'<div class="mut">No video.</div>';
+}
+
+/* ---------- render ---------- */
+function render(){
+  const titles={today:'Today',cal:'Calendar',rt:'Routines',ex:'Exercises'};
+  $('#title').textContent=titles[tab];
+  $('#hdr').innerHTML=(tab==='rt'?`<button class="ib" aria-label="New routine" onclick="editRoutine()">${I.plus}</button>`:tab==='ex'?`<button class="ib" aria-label="New exercise" onclick="editExercise()">${I.plus}</button>`:'')+`<button class="ib" aria-label="More" id="moreBtn" onclick="moreSheet()">${I.more}</button>`;
+  $('#tabs').innerHTML=[['today','Today',I.today],['cal','Calendar',I.cal],['rt','Routines',I.list],['ex','Exercises',I.db]].map(([k,l,s])=>`<button class="tab ${tab===k?'on':''}" data-tab="${k}" onclick="go('${k}')">${s}<span>${l}</span></button>`).join('');
+  ({today:rToday,cal:rCal,rt:rRoutines,ex:rExercises})[tab]();
+}
+function go(t){tab=t;window.scrollTo(0,0);render()}
+
+function rToday(){
+  const t=todayS(),inf=dayInfo(t);let h='';
+  if(S.feedbackQueue.length)h+=`<div class="banner">${S.feedbackQueue.length} feedback note${S.feedbackQueue.length>1?'s':''} waiting to send <span class="sp"></span><button class="btn s p" onclick="sendQueued()">${navigator.onLine?'Open':'Offline'}</button></div>`;
+  h+=`<div class="mut small" style="margin:0 4px 8px">${fmt(t,{weekday:'long',month:'long',day:'numeric'})}</div>`;
+  if(inf.kind==='workout'){
+    const r=rtById(inf.routineId);
+    if(!r)h+=`<div class="card"><div class="big">Workout day</div><div class="mut">No routine set. Pick one in Calendar → Plan.</div></div>`;
+    else{
+      h+=`<div class="card"><div class="row"><span class="tag">${inf.extra?'Added workout':'Workout day'}</span><span class="sp"></span>${inf.done?ic('ok')+'<span class="small" style="color:var(--ok);font-weight:600">Done</span>':''}</div>
+      <div class="big">${esc(r.name)}</div><div class="mut small">${r.items.length} exercises</div>
+      <div class="list" style="margin:8px 0 12px">${r.items.map(it=>{const e=exById(it.exId);return e?`<div class="it"><div class="sp"><div class="t">${esc(e.name)}</div><div class="small mut">${prescription(e,it)}</div></div>${e.video?`<button class="ib" aria-label="Video" onclick="showVideo(exById('${e.id}').name,exById('${e.id}').video)">${I.video}</button>`:''}</div>`:''}).join('')}</div>
+      ${r.video?`<button class="btn w" style="margin-bottom:8px" onclick="showVideo(rtById('${r.id}').name,rtById('${r.id}').video)">${I.video} Routine video</button>`:''}
+      <button class="btn p w" id="startBtn" onclick="startWorkout('${r.id}')">${I.play} ${inf.done?'Do it again':'Start workout'}</button></div>`;
+    }
+  }else{
+    const nx=nextWorkout(t);
+    h+=`<div class="card" style="text-align:center;padding:28px 16px"><div style="transform:scale(2.2);margin:6px 0 16px">${dayIcon({kind:inf.kind})}</div><div class="big">${inf.kind==='cheat'?'Cheat day':'Rest day'}</div>
+    <div class="mut">${inf.kind==='cheat'?'Enjoy it. Back at it soon.':'Recover well.'}</div>${nx?`<div class="small mut" style="margin-top:10px">Next: <b>${esc(rtById(nx.routineId)?.name||'Workout')}</b> · ${fmt(nx.d)}</div>`:''}
+    ${inf.done?`<div style="margin-top:10px;color:var(--ok);font-weight:600">${ic('ok')} Workout logged</div>`:''}</div>`;
+  }
+  // week strip
+  const wd=pd(t).getDay(),ws=addD(t,-((wd+6)%7));
+  h+=`<div class="card"><div class="week">${[0,1,2,3,4,5,6].map(i=>{const d=addD(ws,i),x=dayInfo(d);return `<div class="d ${d===t?'today':''}">${WD[pd(d).getDay()][0]}<b>${pd(d).getDate()}</b>${dayIcon(x)}</div>`}).join('')}</div></div>`;
+  const total=Object.keys(S.history).length,wk=Object.keys(S.history).filter(d=>d>=ws&&d<=addD(ws,6)).length;
+  h+=`<div class="card stat"><div><b id="streak">${streak()}</b><span class="small mut">streak</span></div><div><b>${wk}</b><span class="small mut">this week</span></div><div><b>${total}</b><span class="small mut">total</span></div></div>`;
+  const hist=Object.entries(S.history).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+  if(hist.length)h+=`<h3>History</h3><div class="card list">${hist.map(([d,x])=>`<div class="it">${ic('ok')}<div class="sp"><div class="t">${esc(rtById(x.routineId)?.name||x.name||'Workout')}</div><div class="small mut">${fmt(d)}${x.sets?` · ${x.sets} sets`:''}</div></div></div>`).join('')}</div>`;
+  h+=`<div style="text-align:center;margin-top:8px"><button class="btn g" id="todayFeedback" onclick="feedbackSheet()">Send feedback</button></div>`;
+  $('#main').innerHTML=h;
+}
+
+let calM=null;
+function rCal(){
+  const t=todayS();if(!calM)calM=t.slice(0,7);
+  const [y,m]=calM.split('-').map(Number),first=new Date(y,m-1,1),off=(first.getDay()+6)%7,start=addD(ds(first),-off);
+  const chgDates=new Set(S.changes.map(c=>c.date));
+  let h=`<div class="card"><div class="row" style="margin-bottom:8px"><button class="ib" aria-label="Previous month" onclick="calShift(-1)">${I.up.replace('M6 15l6-6 6 6','M15 6l-6 6 6 6')}</button><div class="sp" style="text-align:center;font-weight:700" id="calTitle">${MON[m-1]} ${y}</div><button class="ib" aria-label="Next month" onclick="calShift(1)">${I.up.replace('M6 15l6-6 6 6','M9 6l6 6-6 6')}</button></div>
+  <div class="cal">${['M','T','W','T','F','S','S'].map(x=>`<div class="h">${x}</div>`).join('')}`;
+  for(let i=0;i<42;i++){const d=addD(start,i),x=dayInfo(d),r=x.kind==='workout'?rtById(x.routineId):null;
+    h+=`<button data-d="${d}" class="${d.slice(0,7)!==calM?'o':''} ${d===t?'today':''} ${chgDates.has(d)?'chg':''}" title="${x.kind}${r?': '+esc(r.name):''}" data-kind="${x.kind}" data-rt="${r?esc(r.name):''}" onclick="daySheet('${d}')"><span class="n">${pd(d).getDate()}</span>${dayIcon(x)}</button>`}
+  h+=`</div><div class="legend"><span>${ic('w')} Workout</span><span>${ic('r')} Rest</span><span>${ic('c')} Cheat</span><span>${ic('ok')} Done</span><span><span style="display:inline-block;width:14px;height:3px;background:var(--acc);vertical-align:middle"></span> Plan change</span></div></div>`;
+  // upcoming changes
+  const up=S.changes.filter(c=>c.date>=t).sort((a,b)=>a.date.localeCompare(b.date));
+  h+=`<h3>Upcoming changes</h3><div class="card"><div class="list" id="changes">${up.length?up.map(c=>`<div class="it"><div class="sp"><div class="t">${c.type==='switch'?'Switch to ':'Add '}${esc(rtById(c.routineId)?.name||'(deleted)')}</div><div class="small mut">${c.type==='switch'?'Starting ':'On '}${fmt(c.date,{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</div></div><button class="btn s d" onclick="cancelChange('${c.id}')">Cancel</button></div>`).join(''):'<div class="mut small">None. Schedule a routine to start later.</div>'}</div>
+  <button class="btn p w" style="margin-top:10px" id="schedBtn" onclick="changeSheet()">Schedule a change</button></div>`;
+  // plan
+  const sc=S.schedule;
+  h+=`<h3>Plan</h3><div class="card" id="plan">
+   <label class="f"><span>Routine</span><select id="baseRt" onchange="S.schedule.baseRoutine=this.value;save();render()">${S.routines.map(r=>`<option value="${r.id}" ${r.id===sc.baseRoutine?'selected':''}>${esc(r.name)}</option>`).join('')||'<option>No routines</option>'}</select></label>
+   <div class="seg"><button class="${sc.mode==='interval'?'on':''}" id="modeInterval" onclick="setSc('mode','interval')">Every N days</button><button class="${sc.mode==='weekdays'?'on':''}" id="modeWeek" onclick="setSc('mode','weekdays')">Pick weekdays</button></div>
+   ${sc.mode==='interval'?`<div class="g2"><label class="f"><span>Workout every</span><select id="interval" onchange="setSc('interval',+this.value)">${[1,2,3,4,5,6,7].map(n=>`<option value="${n}" ${n===sc.interval?'selected':''}>${n===1?'day':n+' days'}</option>`).join('')}</select></label><label class="f"><span>Starting</span><input type="date" id="startDate" value="${sc.start}" onchange="this.value&&setSc('start',this.value)"></label></div><div class="small mut" style="margin:-4px 0 12px">${sc.interval>1?`${sc.interval-1} rest day${sc.interval>2?'s':''} between workouts`:'Every day'}</div>`
+   :`<div class="small mut" style="margin-bottom:6px">Workout days</div><div class="chips" id="wdChips">${[1,2,3,4,5,6,0].map(i=>`<button class="chip ${sc.weekdays.includes(i)?'on':''}" onclick="toggleArr('weekdays',${i})">${WD[i]}</button>`).join('')}</div>`}
+   <div class="small mut" style="margin-bottom:6px">Cheat day every</div><div class="chips" id="cheatChips">${[1,2,3,4,5,6,0].map(i=>`<button class="chip ${sc.cheatWeekdays.includes(i)?'on':''}" data-wd="${i}" onclick="toggleArr('cheatWeekdays',${i})">${WD[i]}</button>`).join('')}</div>
+   <div class="small mut" style="margin-bottom:6px">Specific cheat &amp; rest dates <span>(or tap a day above)</span></div>
+   <div class="row" style="margin-bottom:8px"><input type="date" id="specDate" value="${t}" style="flex:1"><button class="btn s" onclick="addSpec('cheatDates')">+ Cheat</button><button class="btn s" onclick="addSpec('restDates')">+ Rest</button></div>
+   <div class="chips">${[...sc.cheatDates.map(d=>['cheatDates',d,'c']),...sc.restDates.map(d=>['restDates',d,'r'])].sort((a,b)=>a[1].localeCompare(b[1])).filter(x=>x[1]>=addD(t,-30)).map(([k,d,i])=>`<button class="chip" onclick="toggleArr('${k}','${d}')">${ic(i)} ${fmt(d,{month:'short',day:'numeric'})} ✕</button>`).join('')}</div>
+  </div>`;
+  $('#main').innerHTML=h;
+}
+function calShift(n){const [y,m]=calM.split('-').map(Number);const d=new Date(y,m-1+n,1);calM=ds(d).slice(0,7);render()}
+function setSc(k,v){S.schedule[k]=v;save();render()}
+function toggleArr(k,v){const a=S.schedule[k],i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);save();render()}
+function addSpec(k){const d=$('#specDate').value;if(!d)return;const o=k==='cheatDates'?'restDates':'cheatDates';S.schedule[o]=S.schedule[o].filter(x=>x!==d);if(!S.schedule[k].includes(d))S.schedule[k].push(d);save();render()}
+function cancelChange(id){S.changes=S.changes.filter(c=>c.id!==id);save();render();toast('Change cancelled')}
+function daySheet(d){
+  const x=dayInfo(d),sc=S.schedule,r=x.kind==='workout'?rtById(x.routineId):null;
+  const isC=sc.cheatDates.includes(d),isR=sc.restDates.includes(d),add=S.changes.find(c=>c.type==='add'&&c.date===d);
+  sheet(`<h2>${fmt(d,{weekday:'long',month:'long',day:'numeric'})}</h2>
+   <div class="card row">${dayIcon(x)}<div class="sp"><div class="t">${x.kind==='workout'?esc(r?.name||'Workout'):x.kind==='cheat'?'Cheat day':'Rest day'}</div>${x.done?'<div class="small" style="color:var(--ok)">Completed</div>':''}</div></div>
+   <div class="g2" style="margin-bottom:10px"><button class="btn" onclick="dayToggle('${d}','cheatDates')">${isC?'Remove cheat':'Make cheat day'}</button><button class="btn" onclick="dayToggle('${d}','restDates')">${isR?'Remove rest':'Make rest day'}</button></div>
+   ${add?`<button class="btn w d" onclick="cancelChange('${add.id}');closeSheet()">Remove added workout</button>`:`<button class="btn w" style="margin-bottom:10px" onclick="changeSheet('add','${d}')">Add a workout this day</button>`}
+   ${x.done?`<button class="btn w d" onclick="delete S.history['${d}'];save();closeSheet();render()">Unmark done</button>`:(d<=todayS()&&x.kind==='workout'?`<button class="btn w" onclick="S.history['${d}']={routineId:'${x.routineId}',at:Date.now()};save();closeSheet();render()">Mark as done</button>`:'')}
+  `);
+}
+function dayToggle(d,k){const o=k==='cheatDates'?'restDates':'cheatDates';S.schedule[o]=S.schedule[o].filter(x=>x!==d);toggleArr(k,d);closeSheet()}
+function changeSheet(type,date){
+  type=type||'switch';date=date||nextMonday();
+  if(!S.routines.length){toast('Create a routine first');return}
+  sheet(`<h2>Schedule a change</h2>
+   <div class="seg"><button id="ctSwitch" class="${type==='switch'?'on':''}" onclick="this.classList.add('on');ctAdd.classList.remove('on');ctHint.textContent='From this date on, this routine replaces the current one.'">Switch routine</button><button id="ctAdd" class="${type==='add'?'on':''}" onclick="this.classList.add('on');ctSwitch.classList.remove('on');ctHint.textContent='One extra workout on this date only.'">Add one workout</button></div>
+   <label class="f"><span>Routine</span><select id="chRt">${S.routines.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select></label>
+   <label class="f"><span>Date</span><input type="date" id="chDate" value="${date}" min="${todayS()}"></label>
+   <div class="chips"><button class="chip" id="qNextWeek" onclick="chDate.value=nextMonday()">Next week (Mon)</button><button class="chip" onclick="chDate.value=addD(todayS(),1)">Tomorrow</button><button class="chip" onclick="chDate.value=addD(todayS(),7)">In 7 days</button></div>
+   <p class="small mut" id="ctHint">${type==='switch'?'From this date on, this routine replaces the current one.':'One extra workout on this date only.'}</p>
+   <button class="btn p w" id="chSave" onclick="saveChange()">Schedule</button>`);
+}
+function saveChange(){
+  const type=$('#ctAdd').classList.contains('on')?'add':'switch',d=$('#chDate').value,r=$('#chRt').value;
+  if(!d){toast('Pick a date');return}
+  S.changes=S.changes.filter(c=>!(c.date===d&&c.type===type));
+  S.changes.push({id:uid(),type,date:d,routineId:r});save();closeSheet();calM=d.slice(0,7);render();
+  toast(`${type==='switch'?'Switches to':'Adds'} ${rtById(r).name} on ${fmt(d)}`);
+}
+
+function rRoutines(){
+  let h=S.routines.length?'':`<div class="empty">No routines yet.<br><br><button class="btn p" onclick="editRoutine()">Create routine</button></div>`;
+  h+=S.routines.map(r=>{const using=routineFor(todayS())===r.id;return `<div class="card" onclick="editRoutine('${r.id}')" style="cursor:pointer"><div class="row"><div class="sp"><div class="t" style="font-size:18px">${esc(r.name)}</div><div class="small mut">${r.items.length} exercises${r.video?' · video':''}</div></div>${using?'<span class="tag">Current</span>':''}</div>
+   <div class="small mut" style="margin-top:8px">${r.items.map(i=>esc(exById(i.exId)?.name||'')).filter(Boolean).join(' · ')}</div></div>`}).join('');
+  $('#main').innerHTML=h;
+}
+function rExercises(){
+  let h=S.exercises.length?'':`<div class="empty">No exercises yet.<br><br><button class="btn p" onclick="editExercise()">Add exercise</button></div>`;
+  const groups={};S.exercises.forEach(e=>{(groups[e.group||'Other']=groups[e.group||'Other']||[]).push(e)});
+  for(const g of Object.keys(groups).sort()){
+    h+=`<h3>${esc(g)}</h3><div class="card list">${groups[g].map(e=>`<div class="it" onclick="editExercise('${e.id}')" style="cursor:pointer" data-ex="${esc(e.name)}"><div class="sp"><div class="t">${esc(e.name)}</div><div class="small mut">${prescription(e)} · rest ${e.rest}s</div></div>${e.video?`<button class="ib" aria-label="Video" onclick="event.stopPropagation();showVideo(exById('${e.id}').name,exById('${e.id}').video)">${ic('video','w')}</button>`:''}</div>`).join('')}</div>`;
+  }
+  $('#main').innerHTML=h;
+}
+
+/* ---------- video picker (shared) ---------- */
+let pendingVideo=null; // {type,url} | {type:'file',blob,fileName} | null
+function videoPicker(v){
+  pendingVideo=v?{...v}:null;
+  return `<label class="f"><span>How-to video</span></label>
+  <div class="seg" id="vSeg"><button data-k="none" class="${!v?'on':''}">None</button><button data-k="url" class="${v?.type==='url'?'on':''}">Link</button><button data-k="file" class="${v?.type==='file'?'on':''}">Upload</button></div>
+  <div id="vUrl" ${v?.type==='url'?'':'hidden'}><label class="f"><input id="vUrlIn" type="url" inputmode="url" placeholder="YouTube or video link" value="${esc(v?.type==='url'?v.url:'')}"></label></div>
+  <div id="vFile" ${v?.type==='file'?'':'hidden'}><div class="g2" style="margin-bottom:8px"><label class="btn">Choose video<input id="vFileIn" type="file" accept="video/*" hidden></label><label class="btn">Record<input id="vRecIn" type="file" accept="video/*" capture="environment" hidden></label></div><div class="small mut" id="vFileName" style="margin-bottom:10px">${v?.type==='file'?esc(v.fileName||'Saved video'):'Saved on this phone only, works offline.'}</div></div>
+  <div id="vPrev"></div>`;
+}
+function wireVideoPicker(root){
+  const seg=root.querySelector('#vSeg');
+  seg.onclick=e=>{const b=e.target.closest('button');if(!b)return;seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));const k=b.dataset.k;
+    root.querySelector('#vUrl').hidden=k!=='url';root.querySelector('#vFile').hidden=k!=='file';seg.dataset.k=k};
+  seg.dataset.k=pendingVideo?pendingVideo.type:'none';
+  const onFile=e=>{const f=e.target.files[0];if(!f)return;if(f.size>300e6&&!confirm('This video is large ('+Math.round(f.size/1e6)+' MB). Save anyway?'))return;
+    pendingVideo={type:'file',blob:f,fileName:f.name||'video'};root.querySelector('#vFileName').textContent=`${f.name||'video'} · ${(f.size/1e6).toFixed(1)} MB`;
+    const u=URL.createObjectURL(f);objUrls.push(u);root.querySelector('#vPrev').innerHTML=`<div class="vid"><video src="${u}" controls playsinline muted></video></div>`};
+  root.querySelector('#vFileIn').onchange=onFile;root.querySelector('#vRecIn').onchange=onFile;
+}
+async function collectVideo(root,old){
+  const k=root.querySelector('#vSeg').dataset.k;
+  if(k==='none'){if(old?.type==='file')VDB.del(old.fileId);return null}
+  if(k==='url'){const u=root.querySelector('#vUrlIn').value.trim();if(!u){return null}if(!/^https?:\/\//i.test(u)){toast('Link should start with https://');throw 0}if(old?.type==='file')VDB.del(old.fileId);return {type:'url',url:u}}
+  if(pendingVideo?.type==='file'&&pendingVideo.blob){const id='vid_'+uid();await VDB.put(id,pendingVideo.blob);if(old?.type==='file')VDB.del(old.fileId);return {type:'file',fileId:id,fileName:pendingVideo.fileName}}
+  if(old?.type==='file')return old;
+  toast('Choose a video file');throw 0;
+}
+
+/* ---------- exercise editor ---------- */
+function editExercise(id){
+  const e=id?exById(id):{name:'',group:'',sets:3,mode:'reps',reps:10,secs:30,weight:'',rest:60,notes:'',video:null};
+  const groups=[...new Set(['Chest','Back','Legs','Shoulders','Arms','Core','Cardio','Full body',...S.exercises.map(x=>x.group).filter(Boolean)])];
+  sheet(`<h2>${id?'Edit':'New'} exercise</h2>
+   <label class="f"><span>Name</span><input id="exName" value="${esc(e.name)}" placeholder="e.g. Pull-up" autocomplete="off"></label>
+   <label class="f"><span>Muscle group</span><input id="exGroup" list="grpList" value="${esc(e.group)}" placeholder="e.g. Back"><datalist id="grpList">${groups.map(g=>`<option value="${esc(g)}">`).join('')}</datalist></label>
+   <div class="seg" id="exMode"><button data-m="reps" class="${e.mode==='reps'?'on':''}">Reps</button><button data-m="time" class="${e.mode==='time'?'on':''}">Time</button></div>
+   <div class="g3"><label class="f"><span>Sets</span><input id="exSets" type="number" inputmode="numeric" min="1" value="${e.sets}"></label>
+   <label class="f" id="repsWrap" ${e.mode==='time'?'hidden':''}><span>Reps</span><input id="exReps" type="number" inputmode="numeric" min="1" value="${e.reps}"></label>
+   <label class="f" id="secsWrap" ${e.mode==='reps'?'hidden':''}><span>Seconds</span><input id="exSecs" type="number" inputmode="numeric" min="1" value="${e.secs}"></label>
+   <label class="f"><span>Rest (s)</span><input id="exRest" type="number" inputmode="numeric" min="0" value="${e.rest}"></label></div>
+   <label class="f"><span>Weight (optional)</span><input id="exWeight" value="${esc(e.weight)}" placeholder="e.g. 25 lb"></label>
+   <label class="f"><span>Notes</span><textarea id="exNotes" placeholder="Form cues…">${esc(e.notes)}</textarea></label>
+   ${videoPicker(e.video)}
+   <button class="btn p w" id="exSave">Save</button>
+   ${id?`<button class="btn w d" style="margin-top:6px" id="exDel">Delete exercise</button>`:''}`,root=>{
+    wireVideoPicker(root);
+    const ms=root.querySelector('#exMode');ms.dataset.m=e.mode;
+    ms.onclick=ev=>{const b=ev.target.closest('button');if(!b)return;ms.dataset.m=b.dataset.m;ms.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));root.querySelector('#repsWrap').hidden=b.dataset.m==='time';root.querySelector('#secsWrap').hidden=b.dataset.m==='reps'};
+    if(e.video)videoHTML(e.video).then(h=>{if(!pendingVideo?.blob)root.querySelector('#vPrev').innerHTML=h});
+    root.querySelector('#exSave').onclick=async()=>{
+      const name=root.querySelector('#exName').value.trim();if(!name){toast('Give it a name');return}
+      let video;try{video=await collectVideo(root,e.video)}catch(x){return}
+      const n=(s,d)=>{const v=parseInt(root.querySelector(s).value,10);return isNaN(v)?d:Math.max(0,v)};
+      const o={id:id||'ex_'+uid(),name,group:root.querySelector('#exGroup').value.trim(),mode:ms.dataset.m,sets:n('#exSets',3)||1,reps:n('#exReps',10)||1,secs:n('#exSecs',30)||1,rest:n('#exRest',60),weight:root.querySelector('#exWeight').value.trim(),notes:root.querySelector('#exNotes').value.trim(),video};
+      if(id)Object.assign(exById(id),o);else S.exercises.push(o);save();closeSheet();render();toast('Saved');
+    };
+    if(id)root.querySelector('#exDel').onclick=()=>{
+      const used=S.routines.filter(r=>r.items.some(i=>i.exId===id));
+      if(!confirm(`Delete "${e.name}"?${used.length?` It will be removed from ${used.length} routine(s).`:''}`))return;
+      if(e.video?.type==='file')VDB.del(e.video.fileId);
+      S.exercises=S.exercises.filter(x=>x.id!==id);S.routines.forEach(r=>r.items=r.items.filter(i=>i.exId!==id));save();closeSheet();render();
+    };
+  });
+}
+
+/* ---------- routine editor ---------- */
+let draftItems=[];
+function editRoutine(id){
+  const r=id?rtById(id):{name:'',notes:'',video:null,items:[]};
+  draftItems=r.items.map(i=>({...i}));
+  sheet(`<h2>${id?'Edit':'New'} routine</h2>
+   <label class="f"><span>Name</span><input id="rtName" value="${esc(r.name)}" placeholder="e.g. Upper body" autocomplete="off"></label>
+   <label class="f"><span>Exercises <span style="font-weight:400">— drag ⠿ or use arrows</span></span></label>
+   <div class="list" id="rtItems"></div>
+   <div class="row" style="margin:8px 0 14px"><select id="rtAdd" style="flex:1"><option value="">Add exercise…</option>${S.exercises.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')}</select></div>
+   <label class="f"><span>Notes</span><textarea id="rtNotes">${esc(r.notes||'')}</textarea></label>
+   ${videoPicker(r.video)}
+   <button class="btn p w" id="rtSave">Save</button>
+   ${id?`<div class="g2" style="margin-top:6px"><button class="btn" id="rtUse">Use from today</button><button class="btn" id="rtSched">Schedule…</button></div><button class="btn w d" style="margin-top:6px" id="rtDel">Delete routine</button>`:''}`,root=>{
+    wireVideoPicker(root);drawItems();
+    if(r.video)videoHTML(r.video).then(h=>{if(!pendingVideo?.blob)root.querySelector('#vPrev').innerHTML=h});
+    root.querySelector('#rtAdd').onchange=ev=>{if(ev.target.value){draftItems.push({exId:ev.target.value});ev.target.value='';drawItems()}};
+    root.querySelector('#rtSave').onclick=async()=>{
+      const name=root.querySelector('#rtName').value.trim();if(!name){toast('Give it a name');return}
+      let video;try{video=await collectVideo(root,r.video)}catch(x){return}
+      const o={id:id||'rt_'+uid(),name,notes:root.querySelector('#rtNotes').value.trim(),video,items:draftItems};
+      if(id)Object.assign(rtById(id),o);else{S.routines.push(o);if(!rtById(S.schedule.baseRoutine))S.schedule.baseRoutine=o.id}
+      save();closeSheet();render();toast('Saved');
+    };
+    if(id){
+      root.querySelector('#rtUse').onclick=()=>{S.schedule.baseRoutine=id;S.changes=S.changes.filter(c=>!(c.type==='switch'&&c.date<=todayS()));save();closeSheet();render();toast(`${r.name} is now your routine`)};
+      root.querySelector('#rtSched').onclick=()=>{changeSheet();$('#chRt').value=id};
+      root.querySelector('#rtDel').onclick=()=>{if(!confirm(`Delete "${r.name}"? Scheduled changes using it are removed too.`))return;
+        if(r.video?.type==='file')VDB.del(r.video.fileId);
+        S.routines=S.routines.filter(x=>x.id!==id);S.changes=S.changes.filter(c=>c.routineId!==id);if(S.schedule.baseRoutine===id)S.schedule.baseRoutine=S.routines[0]?.id||'';save();closeSheet();render()};
+    }
+  });
+}
+function drawItems(){
+  const box=$('#rtItems');if(!box)return;
+  box.innerHTML=draftItems.length?draftItems.map((it,i)=>{const e=exById(it.exId);if(!e)return '';return `<div class="it" data-i="${i}" style="flex-wrap:wrap;gap:6px">
+    <span class="handle" aria-label="Drag">${I.grip.replace('<svg','<svg width="22" height="22"')}</span><div class="sp"><div class="t">${esc(e.name)}</div><div class="small mut">${prescription(e,it)}</div></div>
+    <button class="ib" aria-label="Move up" onclick="mvItem(${i},-1)">${I.up}</button><button class="ib" aria-label="Move down" onclick="mvItem(${i},1)">${I.down}</button><button class="ib" aria-label="Remove" onclick="draftItems.splice(${i},1);drawItems()">${I.x}</button>
+    <div style="width:100%;display:flex;gap:8px;padding-left:30px"><input type="number" inputmode="numeric" min="1" placeholder="Sets ${e.sets}" value="${it.sets||''}" aria-label="Sets override" oninput="draftItems[${i}].sets=parseInt(this.value)||undefined" style="min-height:40px">
+    ${e.mode==='time'?`<input type="number" inputmode="numeric" min="1" placeholder="Secs ${e.secs}" value="${it.secs||''}" aria-label="Seconds override" oninput="draftItems[${i}].secs=parseInt(this.value)||undefined" style="min-height:40px">`:`<input type="number" inputmode="numeric" min="1" placeholder="Reps ${e.reps}" value="${it.reps||''}" aria-label="Reps override" oninput="draftItems[${i}].reps=parseInt(this.value)||undefined" style="min-height:40px">`}</div></div>`}).join(''):'<div class="small mut" style="padding:8px 0">No exercises yet.</div>';
+  box.querySelectorAll('.handle').forEach(h=>h.addEventListener('pointerdown',dragStart));
+}
+function mvItem(i,d){const j=i+d;if(j<0||j>=draftItems.length)return;[draftItems[i],draftItems[j]]=[draftItems[j],draftItems[i]];drawItems()}
+function dragStart(ev){
+  ev.preventDefault();const row=ev.target.closest('.it'),box=row.parentNode;row.classList.add('dragging');
+  const move=e=>{const y=e.clientY;const sibs=[...box.children].filter(x=>x!==row);
+    let before=null;for(const s of sibs){const r=s.getBoundingClientRect();if(y<r.top+r.height/2){before=s;break}}
+    if(before)box.insertBefore(row,before);else box.appendChild(row)};
+  const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up);
+    row.classList.remove('dragging');draftItems=[...box.children].map(x=>draftItems[+x.dataset.i]).filter(Boolean);drawItems()};
+  document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);
+}
+
+/* ---------- workout mode ---------- */
+let W=null,timerInt=null;
+function startWorkout(rid){
+  const r=rtById(rid);const items=r.items.map(i=>({it:i,e:exById(i.exId)})).filter(x=>x.e);
+  if(!items.length){toast('This routine has no exercises');return}
+  W={rid,items,i:0,done:items.map(x=>Array(x.it.sets||x.e.sets).fill(false)),rest:0};
+  const o=document.createElement('div');o.className='wo';o.id='wo';document.body.appendChild(o);document.body.style.overflow='hidden';drawW();
+  try{navigator.wakeLock?.request('screen').then(l=>W&&(W.lock=l)).catch(()=>{})}catch(e){}
+}
+function drawW(){
+  const o=$('#wo');if(!o||!W)return;const {e,it}=W.items[W.i],sets=W.done[W.i];
+  const totalSets=W.done.flat().length,doneSets=W.done.flat().filter(Boolean).length;
+  const amt=e.mode==='time'?`${it.secs||e.secs}s`:`${it.reps||e.reps} reps`;
+  o.innerHTML=`<div class="row"><button class="ib" aria-label="Exit" onclick="exitW()">${I.x}</button><div class="sp" style="text-align:center;font-weight:600">${esc(rtById(W.rid)?.name||'')}</div><span class="small mut" style="width:44px;text-align:right">${W.i+1}/${W.items.length}</span></div>
+   <div class="prog"><i style="width:${doneSets/totalSets*100}%"></i></div>
+   <div class="big" id="woName" style="font-size:30px">${esc(e.name)}</div>
+   <div class="mut">${sets.length} × ${amt}${e.weight?' · '+esc(e.weight):''} · rest ${e.rest}s</div>
+   ${e.notes?`<p class="small mut">${esc(e.notes)}</p>`:''}
+   ${e.video?`<button class="btn w" id="woVideo" style="margin:10px 0" onclick="showVideo(W.items[W.i].e.name,W.items[W.i].e.video)">${I.video} How-to video</button>`:''}
+   ${W.rest>0?`<div class="card" style="margin-top:12px" id="restCard"><div class="small mut" style="text-align:center">Rest</div><div class="timer" id="restT">${fmtT(W.rest)}</div><div class="g2"><button class="btn" onclick="W.rest+=15;drawW()">+15s</button><button class="btn" id="skipRest" onclick="endRest()">Skip</button></div></div>`:''}
+   <div style="margin-top:8px">${sets.map((d,k)=>`<div class="setrow"><button class="setbtn ${d?'on':''}" data-set="${k}" aria-label="Set ${k+1}" onclick="toggleSet(${k})">${d?I.ok.replace('<svg','<svg width="24" height="24"'):k+1}</button><div class="sp"><b>Set ${k+1}</b><div class="small mut">${amt}</div></div></div>`).join('')}</div>
+   <div class="g2" style="margin-top:18px"><button class="btn" ${W.i===0?'disabled style="opacity:.4"':''} onclick="W.i--;drawW()">Back</button>
+   ${W.i<W.items.length-1?`<button class="btn p" id="woNext" onclick="W.i++;W.rest=0;drawW()">Next</button>`:`<button class="btn p" id="woFinish" onclick="finishW()">Finish</button>`}</div>`;
+}
+const fmtT=s=>`${Math.floor(s/60)}:${pad(s%60)}`;
+function toggleSet(k){
+  const a=W.done[W.i];a[k]=!a[k];
+  if(a[k]&&W.items[W.i].e.rest>0&&!(a.every(Boolean)&&W.i===W.items.length-1))startRest(W.items[W.i].e.rest);
+  drawW();
+}
+function startRest(s){W.rest=s;clearInterval(timerInt);timerInt=setInterval(()=>{if(!W){clearInterval(timerInt);return}W.rest--;
+  if(W.rest<=0){endRest();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}beep()}else{const t=$('#restT');t?t.textContent=fmtT(W.rest):drawW()}},1000)}
+function endRest(){clearInterval(timerInt);if(W){W.rest=0;const a=W.done[W.i];if(a.every(Boolean)&&W.i<W.items.length-1)W.i++;drawW()}}
+function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.value=.08;o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+.25)}catch(e){}}
+function closeW(){clearInterval(timerInt);try{W?.lock?.release()}catch(e){}W=null;$('#wo')?.remove();document.body.style.overflow=''}
+function exitW(){const any=W.done.flat().some(Boolean);if(any&&!confirm('Leave workout? Progress for this session is not saved.'))return;closeW()}
+function finishW(){
+  const n=W.done.flat().filter(Boolean).length;
+  S.history[todayS()]={routineId:W.rid,name:rtById(W.rid)?.name,at:Date.now(),sets:n};save();closeW();tab='today';render();toast('Workout done 💪');
+}
+
+/* ---------- more / settings ---------- */
+function moreSheet(){
+  sheet(`<h2>More</h2>
+   <div class="list">
+    <div class="it" style="cursor:pointer" id="mFeedback" onclick="feedbackSheet()"><div class="sp"><div class="t">Send feedback</div><div class="small mut">Bug, idea or anything else</div></div></div>
+    <div class="it" style="cursor:pointer" id="mExport" onclick="exportData()"><div class="sp"><div class="t">Export backup</div><div class="small mut">Download a .json file</div></div></div>
+    <div class="it" style="cursor:pointer" id="mImport" onclick="importFile.click()"><div class="sp"><div class="t">Import backup</div><div class="small mut">Replaces everything on this phone</div></div></div>
+    <div class="it" style="cursor:pointer" onclick="if(confirm('Delete all data and start over with the examples?')){S=seed();save();closeSheet();render()}"><div class="sp"><div class="t" style="color:#e5484d">Reset app</div></div></div>
+   </div>
+   <p class="small mut">Everything is stored only on this device. Uploaded videos stay on this phone and are not included in backups (video links are). Version ${APP_VERSION}.</p>
+   <button class="btn w" onclick="closeSheet()">Close</button>`);
+}
+function exportData(){
+  const data={...S,app:'workout-planner',version:APP_VERSION,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`workout-backup-${todayS()}.json`;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);closeSheet();
+  const files=[...S.exercises,...S.routines].filter(x=>x.video?.type==='file').length;
+  toast(files?`Backup saved. ${files} uploaded video(s) stay on this phone only.`:'Backup saved');
+}
+$('#importFile').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const d=JSON.parse(await f.text());
+    if(!Array.isArray(d.exercises)||!Array.isArray(d.routines)||!d.schedule)throw new Error('Not a workout backup');
+    if(!confirm(`Import ${d.exercises.length} exercises and ${d.routines.length} routines? This replaces your current data.`))return;
+    S={v:1,exercises:d.exercises,routines:d.routines,schedule:{...seed().schedule,...d.schedule},changes:d.changes||[],history:d.history||{},feedbackQueue:d.feedbackQueue||[]};
+    save();closeSheet();render();toast('Backup imported');
+  }catch(err){toast('Import failed: '+err.message)}
+};
+
+/* ---------- feedback ---------- */
+function feedbackSheet(){
+  sheet(`<h2>Send feedback</h2>
+   <div class="seg" id="fbType"><button class="on" data-t="Bug">Bug</button><button data-t="Idea">Idea</button><button data-t="Other">Other</button></div>
+   <label class="f"><span>Title</span><input id="fbTitle" maxlength="120" placeholder="Short summary"></label>
+   <label class="f"><span>Description</span><textarea id="fbDesc" maxlength="4000" placeholder="What happened, or what would you like?"></textarea></label>
+   <label class="row" style="margin-bottom:14px;min-height:44px"><input type="checkbox" id="fbDev" checked> <span>Include device info</span></label>
+   <p class="small mut" style="margin-top:-6px">Opens a prefilled GitHub issue on <b>${esc(FEEDBACK_REPO)}</b>. You'll need to be signed in to GitHub to submit it.</p>
+   <button class="btn p w" id="fbSend">Continue</button>
+   <button class="btn w g" style="margin-top:4px" id="fbCopy">Copy text instead</button>`,root=>{
+    const seg=root.querySelector('#fbType');seg.onclick=e=>{const b=e.target.closest('button');if(b)seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))};
+    const read=()=>{const title=root.querySelector('#fbTitle').value.trim(),desc=root.querySelector('#fbDesc').value.trim();
+      if(!title&&!desc){toast('Add a title or description');return null}
+      return {type:seg.querySelector('.on').dataset.t,title:title||desc.slice(0,60),desc,device:root.querySelector('#fbDev').checked?deviceInfo():null,at:new Date().toISOString()}};
+    root.querySelector('#fbSend').onclick=()=>{const f=read();if(!f)return;
+      if(navigator.onLine){openIssue(f);closeSheet()}
+      else{S.feedbackQueue.push(f);save();closeSheet();render();toast("You're offline. Saved — you can send it when you're back online.")}};
+    root.querySelector('#fbCopy').onclick=()=>{const f=read();if(f)copyText(`[${f.type}] ${f.title}\n\n${fbBody(f)}`)};
+  });
+}
+function deviceInfo(){return {version:APP_VERSION,ua:navigator.userAgent,screen:`${screen.width}x${screen.height} @${devicePixelRatio}x`,viewport:`${innerWidth}x${innerHeight}`,standalone:matchMedia('(display-mode: standalone)').matches,lang:navigator.language}}
+function fbBody(f,max){
+  let b=`**Type:** ${f.type}\n**App version:** ${APP_VERSION}\n**Date:** ${f.at}\n\n### Description\n${f.desc||'(none)'}\n`;
+  if(f.device)b+=`\n### Device\n- User agent: ${f.device.ua}\n- Screen: ${f.device.screen}\n- Viewport: ${f.device.viewport}\n- Installed app: ${f.device.standalone?'yes':'no'}\n- Language: ${f.device.lang}\n`;
+  if(max&&b.length>max)b=b.slice(0,max-20)+'\n…(truncated)';
+  return b;
+}
+function issueUrl(f){
+  const lab={Bug:'bug',Idea:'idea',Other:'feedback'}[f.type]||'';
+  const base=`https://github.com/${FEEDBACK_REPO}/issues/new?`;
+  const t=`[${f.type}] ${f.title}`.slice(0,200);
+  let max=4000,u;
+  do{u=base+'title='+encodeURIComponent(t)+'&labels='+encodeURIComponent(lab)+'&body='+encodeURIComponent(fbBody(f,max));max-=300}while(u.length>6000&&max>200);
+  return u;
+}
+function openIssue(f){const u=issueUrl(f);const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}
+function sendQueued(){
+  if(!navigator.onLine){toast('Still offline. Copy the text instead, or try again later.');queueSheet();return}
+  queueSheet();
+}
+function queueSheet(){
+  sheet(`<h2>Waiting feedback</h2><div class="list">${S.feedbackQueue.map((f,i)=>`<div class="it"><div class="sp"><div class="t">[${esc(f.type)}] ${esc(f.title)}</div><div class="small mut">${new Date(f.at).toLocaleString()}</div></div>
+   <button class="btn s p" onclick="qOpen(${i})" ${navigator.onLine?'':'disabled style="opacity:.4"'}>Open</button><button class="btn s" onclick="qCopy(${i})">Copy</button><button class="ib" aria-label="Discard" onclick="S.feedbackQueue.splice(${i},1);save();S.feedbackQueue.length?queueSheet():(closeSheet(),render())">${I.x}</button></div>`).join('')}</div>
+   <button class="btn w" style="margin-top:10px" onclick="closeSheet();render()">Close</button>`);
+}
+function qOpen(i){const f=S.feedbackQueue[i];openIssue(f);S.feedbackQueue.splice(i,1);save();S.feedbackQueue.length?queueSheet():(closeSheet(),render())}
+function qCopy(i){const f=S.feedbackQueue[i];copyText(`[${f.type}] ${f.title}\n\n${fbBody(f)}`)}
+function copyText(t){
+  const fb=()=>{const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();toast(ok?'Copied':'Copy failed — select and copy manually')};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(()=>toast('Copied'),fb);else fb();
+}
+addEventListener('online',()=>{if(S.feedbackQueue.length){toast(`Back online — ${S.feedbackQueue.length} feedback note(s) ready to send`);if(tab==='today'&&!$('#sheet')&&!W)render()}});
+addEventListener('offline',()=>{if(tab==='today'&&!$('#sheet')&&!W)render()});
+
+/* ---------- day rollover & boot ---------- */
+let lastDay=todayS();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&todayS()!==lastDay){lastDay=todayS();if(!W&&!$('#sheet'))render()}});
+render();
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW failed',e)));
+}
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+</script>
+</body>
+</html>
