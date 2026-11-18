@@ -16,13 +16,17 @@
 <script>
 /* ===== CONFIG: GitHub repo that receives feedback issues (OWNER/REPO) ===== */
 const FEEDBACK_REPO = 'Nexplexthecoder/workout-app';
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
+/* Auto-update: the installed Android app checks this repo's GitHub releases for a newer Workout-X.Y.Z.apk */
+const UPDATE_REPO = 'Nexplexthecoder/workout-app';
 </script>
+<script src="firebase-config.js"></script>
 <style>
 :root{--bg:#f7f7f8;--card:#fff;--fg:#111113;--mut:#6b6b73;--line:#e6e6ea;--acc:#ff5a1f;--accs:#ff5a1f1a;--ok:#16a34a;--r:16px;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color-scheme:light dark}
 @media (prefers-color-scheme:dark){:root{--bg:#111113;--card:#1c1c1f;--fg:#f2f2f4;--mut:#9a9aa3;--line:#2c2c31;--accs:#ff5a1f26}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--fg)}
 body{font-size:16px;line-height:1.4;min-height:100vh;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 header{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:calc(14px + env(safe-area-inset-top)) 20px 10px}
@@ -90,6 +94,24 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--acc)
 .empty{text-align:center;color:var(--mut);padding:28px 10px}
 h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:18px 4px 8px}
 a{color:var(--acc)}
+.sheet-bg.l2{z-index:25}
+.hdr-r{display:flex;align-items:center;gap:2px}
+.av{width:32px;height:32px;border-radius:50%;background:var(--acc);color:#fff;font-weight:700;font-size:14px;display:inline-flex;align-items:center;justify-content:center}
+.syncdot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--ok);margin-right:6px;vertical-align:middle}
+.syncdot.off{background:var(--mut)} .syncdot.busy{background:#d9a400}
+.welcome{position:fixed;inset:0;z-index:18;background:var(--bg);display:flex;flex-direction:column;justify-content:center;padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+.welcome .logo{width:72px;height:72px;border-radius:20px;background:var(--acc);display:flex;align-items:center;justify-content:center;margin:0 0 18px}
+.welcome .logo svg{width:44px;height:44px;color:#fff}
+.welcome h1{font-size:32px;margin:0 0 6px;letter-spacing:-.02em}
+.err{color:#e5484d;font-size:14px;margin:-4px 0 10px;min-height:1px}
+.gbtn{background:var(--card);border:1px solid var(--line)}
+.or{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:13px;margin:14px 0}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin:12px 0} .bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+.exadd{display:flex;gap:8px;margin:8px 0 14px} .exadd input{flex:1}
+.it .t.tap{cursor:pointer}
+.btn.startbig{min-height:58px;font-size:18px;border-radius:14px}
+.btn.startbig svg{width:22px;height:22px}
 </style>
 </head>
 <body>
@@ -116,6 +138,8 @@ const I={
  r:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
  c:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 3 20.5c6 2 12 2 18 0z" opacity=".9"/><circle cx="10" cy="13" r="1.4" fill="var(--card)"/><circle cx="14" cy="16" r="1.4" fill="var(--card)"/></svg>',
  ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8.5" r="4"/><path d="M4 20.5c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+ edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
  video:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3z"/></svg>',
 };
 const ic=(k,cls)=>`<span class="ic ${cls||k}">${I[k]}</span>`;
@@ -135,36 +159,80 @@ const MON=['January','February','March','April','May','June','July','August','Se
 const fmt=(s,o)=>pd(s).toLocaleDateString(undefined,o||{weekday:'short',month:'short',day:'numeric'});
 const nextMonday=()=>{const t=todayS();const wd=pd(t).getDay();return addD(t,((8-wd)%7)||7)};
 
-/* ---------- state ---------- */
-const KEY='workoutPlanner.v1';
+/* ---------- state ----------
+ v2: no exercise library. A routine owns its exercises; each one is just a typed name plus optional details:
+   routine.items = [{id,name,mode:'reps'|'time',sets,reps,secs,rest,weight,notes,video}]
+ Storage: guest data -> GUEST_KEY (this device only). Signed-in data -> USER_KEY(uid) cache, synced to the account. */
+const LEGACY_KEY='workoutPlanner.v1', GUEST_KEY='workoutPlanner.v2.guest', ACC_KEY='workoutPlanner.account';
+const USER_KEY=uid=>'workoutPlanner.v2.u.'+uid, META_KEY=uid=>'workoutPlanner.sync.'+uid;
+const DEVICE_ID=(()=>{let d=localStorage.getItem('workoutPlanner.device');if(!d){d='dev_'+uid();localStorage.setItem('workoutPlanner.device',d)}return d})();
 function seed(){
   const t=todayS();
-  const ex=[
-   {id:'ex_pushup',name:'Push-up',group:'Chest',sets:3,mode:'reps',reps:10,secs:30,weight:'',rest:60,notes:'Body in a straight line, elbows ~45°.',video:{type:'url',url:'https://www.youtube.com/watch?v=IODxDxX7oi4'}},
-   {id:'ex_squat',name:'Bodyweight squat',group:'Legs',sets:3,mode:'reps',reps:15,secs:30,weight:'',rest:60,notes:'Chest up, knees track over toes.',video:{type:'url',url:'https://www.youtube.com/watch?v=aclHkVaku9U'}},
-   {id:'ex_lunge',name:'Lunge',group:'Legs',sets:3,mode:'reps',reps:10,secs:30,weight:'',rest:60,notes:'10 per leg.',video:{type:'url',url:'https://www.youtube.com/watch?v=QOVaHwm-Q6U'}},
-   {id:'ex_plank',name:'Plank',group:'Core',sets:3,mode:'time',reps:10,secs:45,weight:'',rest:45,notes:'Squeeze glutes, don\'t let hips sag.',video:{type:'url',url:'https://www.youtube.com/watch?v=pSHjTRCQxIw'}},
-  ];
-  return {v:1,exercises:ex,
-   routines:[{id:'rt_full',name:'Full Body A',notes:'Example routine — edit or delete it.',video:null,items:ex.map(e=>({exId:e.id}))}],
-   schedule:{mode:'interval',interval:2,start:t,weekdays:[1,3,5],cheatWeekdays:[],cheatDates:[],restDates:[],baseRoutine:'rt_full'},
-   changes:[],history:{},feedbackQueue:[]};
+  return {v:2,routines:[],
+   schedule:{mode:'interval',interval:2,start:t,weekdays:[1,3,5],cheatWeekdays:[],cheatDates:[],restDates:[],baseRoutine:''},
+   changes:[],history:{},feedbackQueue:[],updatedAt:0};
 }
+const newItem=(name,o)=>({id:'it_'+uid(),name:String(name||'').trim(),mode:'reps',sets:3,reps:10,secs:30,rest:60,weight:'',notes:'',video:null,...(o||{})});
+/* Upgrade any older shape (v1 exercise library + references) to v2. Safe to run on v2 data. */
+function migrate(d){
+  if(!d||typeof d!=='object')return seed();
+  const base=seed();
+  const o={...base,...d,schedule:{...base.schedule,...(d.schedule||{})}};
+  o.routines=Array.isArray(d.routines)?d.routines.map(r=>({...r})):[];
+  o.changes=Array.isArray(d.changes)?d.changes:[];o.history=d.history&&typeof d.history==='object'?d.history:{};
+  o.feedbackQueue=Array.isArray(d.feedbackQueue)?d.feedbackQueue:[];
+  if(Array.isArray(d.exercises)){
+    const lib=new Map(d.exercises.map(e=>[e.id,e])),used=new Set();
+    for(const r of o.routines){
+      r.items=(r.items||[]).map(it=>{
+        if(!it.exId)return it;const e=lib.get(it.exId);if(!e)return null;used.add(e.id);
+        return newItem(e.name,{mode:e.mode==='time'?'time':'reps',sets:it.sets||e.sets||3,reps:it.reps||e.reps||10,secs:it.secs||e.secs||30,rest:e.rest??60,weight:e.weight||'',notes:e.notes||'',video:e.video||null});
+      }).filter(Boolean);
+    }
+    // Exercises that weren't in any routine are kept (nothing is lost) in an unscheduled routine.
+    const orphans=d.exercises.filter(e=>!used.has(e.id));
+    if(orphans.length)o.routines.push({id:'rt_'+uid(),name:'Saved exercises',notes:'Exercises from the old exercise list that were not in a routine.',video:null,
+      items:orphans.map(e=>newItem(e.name,{mode:e.mode==='time'?'time':'reps',sets:e.sets||3,reps:e.reps||10,secs:e.secs||30,rest:e.rest??60,weight:e.weight||'',notes:e.notes||'',video:e.video||null}))});
+    delete o.exercises;
+  }
+  for(const r of o.routines){r.items=(r.items||[]).filter(i=>i&&i.name).map(i=>({...newItem(i.name),...i}));r.video=r.video||null}
+  if(!o.routines.some(r=>r.id===o.schedule.baseRoutine))o.schedule.baseRoutine=o.routines[0]?.id||'';
+  o.v=2;o.updatedAt=d.updatedAt||0;
+  return o;
+}
+const readJSON=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+let ACC=readJSON(ACC_KEY); // null = first launch (welcome screen) | {mode:'guest'} | {mode:'user',uid,email,name,provider}
 let S;
-try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
-if(!S||!S.exercises)S=seed();
-S.feedbackQueue=S.feedbackQueue||[];
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Could not save: storage full?')}};
-save();
-const exById=id=>S.exercises.find(e=>e.id===id);
+(function loadState(){
+  let g=readJSON(GUEST_KEY);
+  if(!g){const old=readJSON(LEGACY_KEY);if(old){g=migrate(old);localStorage.setItem(GUEST_KEY,JSON.stringify(g));if(!ACC){ACC={mode:'guest'};localStorage.setItem(ACC_KEY,JSON.stringify(ACC))}}}
+  if(ACC&&ACC.mode==='user'){const u=readJSON(USER_KEY(ACC.uid));S=migrate(u||g||seed())}
+  else S=migrate(g||seed());
+})();
+const activeKey=()=>ACC&&ACC.mode==='user'?USER_KEY(ACC.uid):GUEST_KEY;
+const hasData=s=>!!(s&&((s.routines||[]).length||Object.keys(s.history||{}).length));
+function persist(){try{localStorage.setItem(activeKey(),JSON.stringify(S));return true}catch(e){toast('Could not save: storage full?');return false}}
+const save=()=>{S.updatedAt=Date.now();if(persist())Sync.changed()};
+persist();
 const rtById=id=>S.routines.find(r=>r.id===id);
+const knownNames=()=>[...new Set(S.routines.flatMap(r=>r.items.map(i=>i.name)).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
 
 /* ---------- IndexedDB for uploaded videos ---------- */
 const VDB={db:null,
  open(){return this.db?Promise.resolve(this.db):new Promise((res,rej)=>{const q=indexedDB.open('workoutVideos',1);q.onupgradeneeded=()=>q.result.createObjectStore('v');q.onsuccess=()=>{this.db=q.result;res(this.db)};q.onerror=()=>rej(q.error)})},
  async put(id,blob){const db=await this.open();return new Promise((res,rej)=>{const tx=db.transaction('v','readwrite');tx.objectStore('v').put(blob,id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})},
  async get(id){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction('v').objectStore('v').get(id);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
- async del(id){const db=await this.open();return new Promise(res=>{const tx=db.transaction('v','readwrite');tx.objectStore('v').delete(id);tx.oncomplete=res;tx.onerror=res})}};
+ async del(id){const db=await this.open();return new Promise(res=>{const tx=db.transaction('v','readwrite');tx.objectStore('v').delete(id);tx.oncomplete=res;tx.onerror=res})},
+ async keys(){const db=await this.open();return new Promise(res=>{const q=db.transaction('v').objectStore('v').getAllKeys();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])})}};
+/* Uploaded videos can be shared by several exercises (and by guest + account data), so they are only removed
+   when nothing on this device references them any more. */
+async function gcVideos(){
+  try{
+    const refs=new Set(),add=s=>{if(!s||!s.routines)return;for(const r of s.routines){if(r.video?.fileId)refs.add(r.video.fileId);for(const i of r.items||[])if(i.video?.fileId)refs.add(i.video.fileId)}};
+    add(S);for(let k=0;k<localStorage.length;k++){const key=localStorage.key(k);if(/^workoutPlanner\.v[12]/.test(key))add(migrate(readJSON(key)))}
+    for(const k of await VDB.keys())if(!refs.has(k))await VDB.del(k);
+  }catch(e){}
+}
 
 /* ---------- schedule logic ---------- */
 function routineFor(d){
@@ -208,7 +276,15 @@ function sheet(html,onMount){
   bg.addEventListener('click',e=>{if(e.target===bg)closeSheet()});
   document.body.appendChild(bg);onMount&&onMount(bg.firstChild);return bg.firstChild;
 }
-function closeSheet(){const s=$('#sheet');if(s){s.querySelectorAll('video').forEach(v=>v.pause());s.remove()}revokeUrls()}
+function closeSheet(){closeSheet2();const s=$('#sheet');if(s){s.querySelectorAll('video').forEach(v=>v.pause());s.remove()}revokeUrls();setTimeout(()=>Sync.applyDeferred(),0)}
+function sheet2(html,onMount){
+  closeSheet2();
+  const bg=document.createElement('div');bg.className='sheet-bg l2';bg.id='sheet2';
+  bg.innerHTML=`<div class="sheet" role="dialog"><div class="grab"></div>${html}</div>`;
+  bg.addEventListener('click',e=>{if(e.target===bg)closeSheet2()});
+  document.body.appendChild(bg);onMount&&onMount(bg.firstChild);return bg.firstChild;
+}
+function closeSheet2(){const s=$('#sheet2');if(s){s.querySelectorAll('video').forEach(v=>v.pause());s.remove()}}
 let objUrls=[];function revokeUrls(){objUrls.forEach(u=>URL.revokeObjectURL(u));objUrls=[]}
 const prescription=(ex,ov)=>{ov=ov||{};const sets=ov.sets||ex.sets,mode=ex.mode;const amt=mode==='time'?`${ov.secs||ex.secs}s`:`${ov.reps||ex.reps} reps`;return `${sets} × ${amt}${ex.weight?' · '+esc(ex.weight):''}`};
 
@@ -236,33 +312,38 @@ async function showVideo(title,v){
 
 /* ---------- render ---------- */
 function render(){
-  const titles={today:'Today',cal:'Calendar',rt:'Routines',ex:'Exercises'};
+  if(tab==='ex')tab='rt';
+  const titles={today:'Today',cal:'Calendar',rt:'Routines'};
   $('#title').textContent=titles[tab];
-  $('#hdr').innerHTML=(tab==='rt'?`<button class="ib" aria-label="New routine" onclick="editRoutine()">${I.plus}</button>`:tab==='ex'?`<button class="ib" aria-label="New exercise" onclick="editExercise()">${I.plus}</button>`:'')+`<button class="ib" aria-label="More" id="moreBtn" onclick="moreSheet()">${I.more}</button>`;
-  $('#tabs').innerHTML=[['today','Today',I.today],['cal','Calendar',I.cal],['rt','Routines',I.list],['ex','Exercises',I.db]].map(([k,l,s])=>`<button class="tab ${tab===k?'on':''}" data-tab="${k}" onclick="go('${k}')">${s}<span>${l}</span></button>`).join('');
-  ({today:rToday,cal:rCal,rt:rRoutines,ex:rExercises})[tab]();
+  const acc=ACC&&ACC.mode==='user'?`<button class="ib" aria-label="Account" id="accBtn" onclick="accountSheet()"><span class="av">${esc((ACC.email||ACC.name||'?')[0].toUpperCase())}</span></button>`:`<button class="ib" aria-label="Account" id="accBtn" onclick="accountSheet()">${I.user}</button>`;
+  $('#hdr').innerHTML=`<div class="hdr-r">${tab==='rt'?`<button class="ib" aria-label="New routine" onclick="editRoutine()">${I.plus}</button>`:''}${acc}<button class="ib" aria-label="More" id="moreBtn" onclick="moreSheet()">${I.more}</button></div>`;
+  $('#tabs').innerHTML=[['today','Today',I.today],['cal','Calendar',I.cal],['rt','Routines',I.list]].map(([k,l,s])=>`<button class="tab ${tab===k?'on':''}" data-tab="${k}" onclick="go('${k}')">${s}<span>${l}</span></button>`).join('');
+  ({today:rToday,cal:rCal,rt:rRoutines})[tab]();
 }
 function go(t){tab=t;window.scrollTo(0,0);render()}
 
 function rToday(){
   const t=todayS(),inf=dayInfo(t);let h='';
   if(S.feedbackQueue.length)h+=`<div class="banner">${S.feedbackQueue.length} feedback note${S.feedbackQueue.length>1?'s':''} waiting to send <span class="sp"></span><button class="btn s p" onclick="sendQueued()">${navigator.onLine?'Open':'Offline'}</button></div>`;
+  const ses=readJSON(SESSION_KEY);
+  if(ses&&ses.owner===activeKey()&&rtById(ses.rid)&&!W)h+=`<div class="banner" id="resumeBanner">${I.play.replace('<svg','<svg width="18" height="18"')} ${esc(rtById(ses.rid).name)} in progress <span class="sp"></span><button class="btn s p" id="resumeBtn" onclick="resumeWorkout(readJSON(SESSION_KEY))">Resume</button></div>`;
   h+=`<div class="mut small" style="margin:0 4px 8px">${fmt(t,{weekday:'long',month:'long',day:'numeric'})}</div>`;
   if(inf.kind==='workout'){
     const r=rtById(inf.routineId);
-    if(!r)h+=`<div class="card"><div class="big">Workout day</div><div class="mut">No routine set. Pick one in Calendar → Plan.</div></div>`;
+    if(!r)h+=S.routines.length?`<div class="card"><div class="big">Workout day</div><div class="mut">No routine set. Pick one in Calendar → Plan.</div></div>`:`<div class="card" style="text-align:center;padding:26px 16px"><div class="big">Let's build your routine</div><div class="mut" style="margin-bottom:14px">Type in your own exercises, any you like.</div><button class="btn p" id="firstRoutine" onclick="go('rt');editRoutine()">${I.plus} Create routine</button></div>`;
     else{
       h+=`<div class="card"><div class="row"><span class="tag">${inf.extra?'Added workout':'Workout day'}</span><span class="sp"></span>${inf.done?ic('ok')+'<span class="small" style="color:var(--ok);font-weight:600">Done</span>':''}</div>
       <div class="big">${esc(r.name)}</div><div class="mut small">${r.items.length} exercises</div>
-      <div class="list" style="margin:8px 0 12px">${r.items.map(it=>{const e=exById(it.exId);return e?`<div class="it"><div class="sp"><div class="t">${esc(e.name)}</div><div class="small mut">${prescription(e,it)}</div></div>${e.video?`<button class="ib" aria-label="Video" onclick="showVideo(exById('${e.id}').name,exById('${e.id}').video)">${I.video}</button>`:''}</div>`:''}).join('')}</div>
+      <div class="list" style="margin:8px 0 12px">${r.items.map(e=>`<div class="it"><div class="sp"><div class="t">${esc(e.name)}</div><div class="small mut">${prescription(e)}</div></div>${e.video?`<button class="ib" aria-label="Video" onclick="showItemVideo('${r.id}','${e.id}')">${I.video}</button>`:''}</div>`).join('')||'<div class="small mut" style="padding:8px 0">No exercises yet. Edit the routine to add some.</div>'}</div>
       ${r.video?`<button class="btn w" style="margin-bottom:8px" onclick="showVideo(rtById('${r.id}').name,rtById('${r.id}').video)">${I.video} Routine video</button>`:''}
-      <button class="btn p w" id="startBtn" onclick="startWorkout('${r.id}')">${I.play} ${inf.done?'Do it again':'Start workout'}</button></div>`;
+      <button class="btn p w startbig" id="startBtn" onclick="startWorkout('${r.id}')">${I.play} ${inf.done?'Do it again':'Start workout'}</button></div>`;
     }
   }else{
     const nx=nextWorkout(t);
     h+=`<div class="card" style="text-align:center;padding:28px 16px"><div style="transform:scale(2.2);margin:6px 0 16px">${dayIcon({kind:inf.kind})}</div><div class="big">${inf.kind==='cheat'?'Cheat day':'Rest day'}</div>
     <div class="mut">${inf.kind==='cheat'?'Enjoy it. Back at it soon.':'Recover well.'}</div>${nx?`<div class="small mut" style="margin-top:10px">Next: <b>${esc(rtById(nx.routineId)?.name||'Workout')}</b> · ${fmt(nx.d)}</div>`:''}
-    ${inf.done?`<div style="margin-top:10px;color:var(--ok);font-weight:600">${ic('ok')} Workout logged</div>`:''}</div>`;
+    ${inf.done?`<div style="margin-top:10px;color:var(--ok);font-weight:600">${ic('ok')} Workout logged</div>`:''}
+    ${rtById(routineFor(t))?.items.length?`<button class="btn w startbig" style="margin-top:16px" id="startBtn" onclick="startWorkout('${routineFor(t)}')">${I.play} Start workout anyway</button>`:''}</div>`;
   }
   // week strip
   const wd=pd(t).getDay(),ws=addD(t,-((wd+6)%7));
@@ -270,7 +351,7 @@ function rToday(){
   const total=Object.keys(S.history).length,wk=Object.keys(S.history).filter(d=>d>=ws&&d<=addD(ws,6)).length;
   h+=`<div class="card stat"><div><b id="streak">${streak()}</b><span class="small mut">streak</span></div><div><b>${wk}</b><span class="small mut">this week</span></div><div><b>${total}</b><span class="small mut">total</span></div></div>`;
   const hist=Object.entries(S.history).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
-  if(hist.length)h+=`<h3>History</h3><div class="card list">${hist.map(([d,x])=>`<div class="it">${ic('ok')}<div class="sp"><div class="t">${esc(rtById(x.routineId)?.name||x.name||'Workout')}</div><div class="small mut">${fmt(d)}${x.sets?` · ${x.sets} sets`:''}</div></div></div>`).join('')}</div>`;
+  if(hist.length)h+=`<h3>History</h3><div class="card list">${hist.map(([d,x])=>`<div class="it">${ic('ok')}<div class="sp"><div class="t">${esc(rtById(x.routineId)?.name||x.name||'Workout')}</div><div class="small mut">${fmt(d)}${x.sets?` · ${x.sets} sets`:''}${x.duration?` · ${fmtDur(x.duration)}`:''}</div></div></div>`).join('')}</div>`;
   h+=`<div style="text-align:center;margin-top:8px"><button class="btn g" id="todayFeedback" onclick="feedbackSheet()">Send feedback</button></div>`;
   $('#main').innerHTML=h;
 }
@@ -339,127 +420,119 @@ function saveChange(){
 }
 
 function rRoutines(){
-  let h=S.routines.length?'':`<div class="empty">No routines yet.<br><br><button class="btn p" onclick="editRoutine()">Create routine</button></div>`;
-  h+=S.routines.map(r=>{const using=routineFor(todayS())===r.id;return `<div class="card" onclick="editRoutine('${r.id}')" style="cursor:pointer"><div class="row"><div class="sp"><div class="t" style="font-size:18px">${esc(r.name)}</div><div class="small mut">${r.items.length} exercises${r.video?' · video':''}</div></div>${using?'<span class="tag">Current</span>':''}</div>
-   <div class="small mut" style="margin-top:8px">${r.items.map(i=>esc(exById(i.exId)?.name||'')).filter(Boolean).join(' · ')}</div></div>`}).join('');
+  let h=S.routines.length?'':`<div class="empty">No routines yet.<br><br><button class="btn p" id="createRoutine" onclick="editRoutine()">Create routine</button></div>`;
+  h+=S.routines.map(r=>{const using=routineFor(todayS())===r.id;return `<div class="card" onclick="editRoutine('${r.id}')" style="cursor:pointer"><div class="row"><div class="sp"><div class="t" style="font-size:18px">${esc(r.name)}</div><div class="small mut">${r.items.length} exercise${r.items.length===1?'':'s'}${r.video?' · video':''}</div></div>${using?'<span class="tag">Current</span>':''}</div>
+   <div class="small mut" style="margin-top:8px">${r.items.map(i=>esc(i.name)).join(' · ')}</div>${r.items.length?`<button class="btn p w" style="margin-top:12px" data-start="${r.id}" onclick="event.stopPropagation();startWorkout('${r.id}')">${I.play} Start workout</button>`:''}</div>`}).join('');
   $('#main').innerHTML=h;
 }
-function rExercises(){
-  let h=S.exercises.length?'':`<div class="empty">No exercises yet.<br><br><button class="btn p" onclick="editExercise()">Add exercise</button></div>`;
-  const groups={};S.exercises.forEach(e=>{(groups[e.group||'Other']=groups[e.group||'Other']||[]).push(e)});
-  for(const g of Object.keys(groups).sort()){
-    h+=`<h3>${esc(g)}</h3><div class="card list">${groups[g].map(e=>`<div class="it" onclick="editExercise('${e.id}')" style="cursor:pointer" data-ex="${esc(e.name)}"><div class="sp"><div class="t">${esc(e.name)}</div><div class="small mut">${prescription(e)} · rest ${e.rest}s</div></div>${e.video?`<button class="ib" aria-label="Video" onclick="event.stopPropagation();showVideo(exById('${e.id}').name,exById('${e.id}').video)">${ic('video','w')}</button>`:''}</div>`).join('')}</div>`;
-  }
-  $('#main').innerHTML=h;
-}
+function showItemVideo(rid,iid){const r=rtById(rid),e=r&&r.items.find(i=>i.id===iid);if(e)showVideo(e.name,e.video)}
 
 /* ---------- video picker (shared) ---------- */
-let pendingVideo=null; // {type,url} | {type:'file',blob,fileName} | null
+// The pending (not yet saved) video choice lives on each sheet's root element, so the routine sheet and the
+// exercise sheet above it don't overwrite each other's choice.
 function videoPicker(v){
-  pendingVideo=v?{...v}:null;
-  return `<label class="f"><span>How-to video</span></label>
-  <div class="seg" id="vSeg"><button data-k="none" class="${!v?'on':''}">None</button><button data-k="url" class="${v?.type==='url'?'on':''}">Link</button><button data-k="file" class="${v?.type==='file'?'on':''}">Upload</button></div>
-  <div id="vUrl" ${v?.type==='url'?'':'hidden'}><label class="f"><input id="vUrlIn" type="url" inputmode="url" placeholder="YouTube or video link" value="${esc(v?.type==='url'?v.url:'')}"></label></div>
-  <div id="vFile" ${v?.type==='file'?'':'hidden'}><div class="g2" style="margin-bottom:8px"><label class="btn">Choose video<input id="vFileIn" type="file" accept="video/*" hidden></label><label class="btn">Record<input id="vRecIn" type="file" accept="video/*" capture="environment" hidden></label></div><div class="small mut" id="vFileName" style="margin-bottom:10px">${v?.type==='file'?esc(v.fileName||'Saved video'):'Saved on this phone only, works offline.'}</div></div>
-  <div id="vPrev"></div>`;
+  return `<label class="f"><span>How-to video <span style="font-weight:400">(optional)</span></span></label>
+  <div class="seg vSeg"><button data-k="none" class="${!v?'on':''}">None</button><button data-k="url" class="${v?.type==='url'?'on':''}">Link</button><button data-k="file" class="${v?.type==='file'?'on':''}">Upload</button></div>
+  <div class="vUrl" ${v?.type==='url'?'':'hidden'}><label class="f"><input class="vUrlIn" type="url" inputmode="url" placeholder="YouTube or video link" value="${esc(v?.type==='url'?v.url:'')}"></label></div>
+  <div class="vFile" ${v?.type==='file'?'':'hidden'}><div class="g2" style="margin-bottom:8px"><label class="btn">Choose video<input class="vFileIn" type="file" accept="video/*" hidden></label><label class="btn">Record<input class="vRecIn" type="file" accept="video/*" capture="environment" hidden></label></div><div class="small mut vFileName" style="margin-bottom:10px">${v?.type==='file'?esc(v.fileName||'Saved video'):'Saved on this phone only, works offline.'}</div></div>
+  <div class="vPrev"></div>`;
 }
-function wireVideoPicker(root){
-  const seg=root.querySelector('#vSeg');
+function wireVideoPicker(root,v){
+  root._pv=v?{...v}:null;
+  const q=s=>root.querySelector(s),seg=q('.vSeg');
   seg.onclick=e=>{const b=e.target.closest('button');if(!b)return;seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));const k=b.dataset.k;
-    root.querySelector('#vUrl').hidden=k!=='url';root.querySelector('#vFile').hidden=k!=='file';seg.dataset.k=k};
-  seg.dataset.k=pendingVideo?pendingVideo.type:'none';
+    q('.vUrl').hidden=k!=='url';q('.vFile').hidden=k!=='file';seg.dataset.k=k};
+  seg.dataset.k=v?v.type:'none';
   const onFile=e=>{const f=e.target.files[0];if(!f)return;if(f.size>300e6&&!confirm('This video is large ('+Math.round(f.size/1e6)+' MB). Save anyway?'))return;
-    pendingVideo={type:'file',blob:f,fileName:f.name||'video'};root.querySelector('#vFileName').textContent=`${f.name||'video'} · ${(f.size/1e6).toFixed(1)} MB`;
-    const u=URL.createObjectURL(f);objUrls.push(u);root.querySelector('#vPrev').innerHTML=`<div class="vid"><video src="${u}" controls playsinline muted></video></div>`};
-  root.querySelector('#vFileIn').onchange=onFile;root.querySelector('#vRecIn').onchange=onFile;
+    root._pv={type:'file',blob:f,fileName:f.name||'video'};q('.vFileName').textContent=`${f.name||'video'} · ${(f.size/1e6).toFixed(1)} MB`;
+    const u=URL.createObjectURL(f);objUrls.push(u);q('.vPrev').innerHTML=`<div class="vid"><video src="${u}" controls playsinline muted></video></div>`};
+  q('.vFileIn').onchange=onFile;q('.vRecIn').onchange=onFile;
+  if(v)videoHTML(v).then(x=>{if(!root._pv?.blob)q('.vPrev').innerHTML=x});
 }
 async function collectVideo(root,old){
-  const k=root.querySelector('#vSeg').dataset.k;
-  if(k==='none'){if(old?.type==='file')VDB.del(old.fileId);return null}
-  if(k==='url'){const u=root.querySelector('#vUrlIn').value.trim();if(!u){return null}if(!/^https?:\/\//i.test(u)){toast('Link should start with https://');throw 0}if(old?.type==='file')VDB.del(old.fileId);return {type:'url',url:u}}
-  if(pendingVideo?.type==='file'&&pendingVideo.blob){const id='vid_'+uid();await VDB.put(id,pendingVideo.blob);if(old?.type==='file')VDB.del(old.fileId);return {type:'file',fileId:id,fileName:pendingVideo.fileName}}
+  const q=s=>root.querySelector(s),k=q('.vSeg').dataset.k,pv=root._pv;
+  if(k==='none')return null;
+  if(k==='url'){const u=q('.vUrlIn').value.trim();if(!u){return null}if(!/^https?:\/\//i.test(u)){toast('Link should start with https://');throw 0}return {type:'url',url:u}}
+  if(pv?.type==='file'&&pv.blob){const id='vid_'+uid();await VDB.put(id,pv.blob);return {type:'file',fileId:id,fileName:pv.fileName}}
   if(old?.type==='file')return old;
   toast('Choose a video file');throw 0;
 }
 
-/* ---------- exercise editor ---------- */
-function editExercise(id){
-  const e=id?exById(id):{name:'',group:'',sets:3,mode:'reps',reps:10,secs:30,weight:'',rest:60,notes:'',video:null};
-  const groups=[...new Set(['Chest','Back','Legs','Shoulders','Arms','Core','Cardio','Full body',...S.exercises.map(x=>x.group).filter(Boolean)])];
-  sheet(`<h2>${id?'Edit':'New'} exercise</h2>
-   <label class="f"><span>Name</span><input id="exName" value="${esc(e.name)}" placeholder="e.g. Pull-up" autocomplete="off"></label>
-   <label class="f"><span>Muscle group</span><input id="exGroup" list="grpList" value="${esc(e.group)}" placeholder="e.g. Back"><datalist id="grpList">${groups.map(g=>`<option value="${esc(g)}">`).join('')}</datalist></label>
-   <div class="seg" id="exMode"><button data-m="reps" class="${e.mode==='reps'?'on':''}">Reps</button><button data-m="time" class="${e.mode==='time'?'on':''}">Time</button></div>
-   <div class="g3"><label class="f"><span>Sets</span><input id="exSets" type="number" inputmode="numeric" min="1" value="${e.sets}"></label>
-   <label class="f" id="repsWrap" ${e.mode==='time'?'hidden':''}><span>Reps</span><input id="exReps" type="number" inputmode="numeric" min="1" value="${e.reps}"></label>
-   <label class="f" id="secsWrap" ${e.mode==='reps'?'hidden':''}><span>Seconds</span><input id="exSecs" type="number" inputmode="numeric" min="1" value="${e.secs}"></label>
-   <label class="f"><span>Rest (s)</span><input id="exRest" type="number" inputmode="numeric" min="0" value="${e.rest}"></label></div>
-   <label class="f"><span>Weight (optional)</span><input id="exWeight" value="${esc(e.weight)}" placeholder="e.g. 25 lb"></label>
-   <label class="f"><span>Notes</span><textarea id="exNotes" placeholder="Form cues…">${esc(e.notes)}</textarea></label>
-   ${videoPicker(e.video)}
-   <button class="btn p w" id="exSave">Save</button>
-   ${id?`<button class="btn w d" style="margin-top:6px" id="exDel">Delete exercise</button>`:''}`,root=>{
-    wireVideoPicker(root);
-    const ms=root.querySelector('#exMode');ms.dataset.m=e.mode;
-    ms.onclick=ev=>{const b=ev.target.closest('button');if(!b)return;ms.dataset.m=b.dataset.m;ms.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));root.querySelector('#repsWrap').hidden=b.dataset.m==='time';root.querySelector('#secsWrap').hidden=b.dataset.m==='reps'};
-    if(e.video)videoHTML(e.video).then(h=>{if(!pendingVideo?.blob)root.querySelector('#vPrev').innerHTML=h});
-    root.querySelector('#exSave').onclick=async()=>{
-      const name=root.querySelector('#exName').value.trim();if(!name){toast('Give it a name');return}
-      let video;try{video=await collectVideo(root,e.video)}catch(x){return}
-      const n=(s,d)=>{const v=parseInt(root.querySelector(s).value,10);return isNaN(v)?d:Math.max(0,v)};
-      const o={id:id||'ex_'+uid(),name,group:root.querySelector('#exGroup').value.trim(),mode:ms.dataset.m,sets:n('#exSets',3)||1,reps:n('#exReps',10)||1,secs:n('#exSecs',30)||1,rest:n('#exRest',60),weight:root.querySelector('#exWeight').value.trim(),notes:root.querySelector('#exNotes').value.trim(),video};
-      if(id)Object.assign(exById(id),o);else S.exercises.push(o);save();closeSheet();render();toast('Saved');
-    };
-    if(id)root.querySelector('#exDel').onclick=()=>{
-      const used=S.routines.filter(r=>r.items.some(i=>i.exId===id));
-      if(!confirm(`Delete "${e.name}"?${used.length?` It will be removed from ${used.length} routine(s).`:''}`))return;
-      if(e.video?.type==='file')VDB.del(e.video.fileId);
-      S.exercises=S.exercises.filter(x=>x.id!==id);S.routines.forEach(r=>r.items=r.items.filter(i=>i.exId!==id));save();closeSheet();render();
-    };
-  });
-}
-
-/* ---------- routine editor ---------- */
+/* ---------- routine editor (exercises are typed in, no premade list) ---------- */
 let draftItems=[];
 function editRoutine(id){
   const r=id?rtById(id):{name:'',notes:'',video:null,items:[]};
   draftItems=r.items.map(i=>({...i}));
   sheet(`<h2>${id?'Edit':'New'} routine</h2>
-   <label class="f"><span>Name</span><input id="rtName" value="${esc(r.name)}" placeholder="e.g. Upper body" autocomplete="off"></label>
-   <label class="f"><span>Exercises <span style="font-weight:400">— drag ⠿ or use arrows</span></span></label>
+   <label class="f"><span>Routine name</span><input id="rtName" value="${esc(r.name)}" placeholder="e.g. Upper body" autocomplete="off"></label>
+   <label class="f"><span>Exercises <span style="font-weight:400">— tap one for details, drag ⠿ to reorder</span></span></label>
    <div class="list" id="rtItems"></div>
-   <div class="row" style="margin:8px 0 14px"><select id="rtAdd" style="flex:1"><option value="">Add exercise…</option>${S.exercises.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')}</select></div>
+   <div class="exadd"><input id="exNew" list="exNames" placeholder="Type an exercise, e.g. Pull-up" autocomplete="off" autocapitalize="sentences" enterkeyhint="done" maxlength="80"><button class="btn p" id="exAddBtn" aria-label="Add exercise">${I.plus}</button></div>
+   <datalist id="exNames">${knownNames().map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
    <label class="f"><span>Notes</span><textarea id="rtNotes">${esc(r.notes||'')}</textarea></label>
    ${videoPicker(r.video)}
    <button class="btn p w" id="rtSave">Save</button>
    ${id?`<div class="g2" style="margin-top:6px"><button class="btn" id="rtUse">Use from today</button><button class="btn" id="rtSched">Schedule…</button></div><button class="btn w d" style="margin-top:6px" id="rtDel">Delete routine</button>`:''}`,root=>{
-    wireVideoPicker(root);drawItems();
-    if(r.video)videoHTML(r.video).then(h=>{if(!pendingVideo?.blob)root.querySelector('#vPrev').innerHTML=h});
-    root.querySelector('#rtAdd').onchange=ev=>{if(ev.target.value){draftItems.push({exId:ev.target.value});ev.target.value='';drawItems()}};
+    wireVideoPicker(root,r.video);drawItems();
+    const inp=root.querySelector('#exNew');
+    const add=()=>{const n=inp.value.trim();if(!n){inp.focus();toast('Type the exercise name');return}
+      // reuse the details from the last time this name was used, so typing it again is quick
+      const prev=S.routines.flatMap(x=>x.items).concat(draftItems).reverse().find(i=>i.name.toLowerCase()===n.toLowerCase());
+      draftItems.push(prev?{...prev,id:'it_'+uid(),name:n}:newItem(n));inp.value='';drawItems();inp.focus()};
+    root.querySelector('#exAddBtn').onclick=add;
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();add()}});
     root.querySelector('#rtSave').onclick=async()=>{
       const name=root.querySelector('#rtName').value.trim();if(!name){toast('Give it a name');return}
+      if(inp.value.trim())add();
       let video;try{video=await collectVideo(root,r.video)}catch(x){return}
-      const o={id:id||'rt_'+uid(),name,notes:root.querySelector('#rtNotes').value.trim(),video,items:draftItems};
-      if(id)Object.assign(rtById(id),o);else{S.routines.push(o);if(!rtById(S.schedule.baseRoutine))S.schedule.baseRoutine=o.id}
-      save();closeSheet();render();toast('Saved');
+      const o={id:id||'rt_'+uid(),name,notes:root.querySelector('#rtNotes').value.trim(),video,items:draftItems.filter(i=>i.name)};
+      if(id&&rtById(id))Object.assign(rtById(id),o);else{S.routines.push(o);if(!rtById(S.schedule.baseRoutine))S.schedule.baseRoutine=o.id}
+      save();closeSheet();render();toast('Saved');gcVideos();
     };
     if(id){
       root.querySelector('#rtUse').onclick=()=>{S.schedule.baseRoutine=id;S.changes=S.changes.filter(c=>!(c.type==='switch'&&c.date<=todayS()));save();closeSheet();render();toast(`${r.name} is now your routine`)};
       root.querySelector('#rtSched').onclick=()=>{changeSheet();$('#chRt').value=id};
       root.querySelector('#rtDel').onclick=()=>{if(!confirm(`Delete "${r.name}"? Scheduled changes using it are removed too.`))return;
-        if(r.video?.type==='file')VDB.del(r.video.fileId);
-        S.routines=S.routines.filter(x=>x.id!==id);S.changes=S.changes.filter(c=>c.routineId!==id);if(S.schedule.baseRoutine===id)S.schedule.baseRoutine=S.routines[0]?.id||'';save();closeSheet();render()};
+        S.routines=S.routines.filter(x=>x.id!==id);S.changes=S.changes.filter(c=>c.routineId!==id);if(S.schedule.baseRoutine===id)S.schedule.baseRoutine=S.routines[0]?.id||'';save();closeSheet();render();gcVideos()};
     }
   });
 }
 function drawItems(){
   const box=$('#rtItems');if(!box)return;
-  box.innerHTML=draftItems.length?draftItems.map((it,i)=>{const e=exById(it.exId);if(!e)return '';return `<div class="it" data-i="${i}" style="flex-wrap:wrap;gap:6px">
-    <span class="handle" aria-label="Drag">${I.grip.replace('<svg','<svg width="22" height="22"')}</span><div class="sp"><div class="t">${esc(e.name)}</div><div class="small mut">${prescription(e,it)}</div></div>
+  box.innerHTML=draftItems.length?draftItems.map((e,i)=>`<div class="it" data-i="${i}" style="flex-wrap:wrap;gap:6px">
+    <span class="handle" aria-label="Drag">${I.grip.replace('<svg','<svg width="22" height="22"')}</span><div class="sp" onclick="editItem(${i})" style="cursor:pointer"><div class="t">${esc(e.name)}${e.video?` <span class="ic w">${I.video}</span>`:''}</div><div class="small mut">${prescription(e)}${e.notes?' · notes':''} · <span style="color:var(--acc)">details</span></div></div>
     <button class="ib" aria-label="Move up" onclick="mvItem(${i},-1)">${I.up}</button><button class="ib" aria-label="Move down" onclick="mvItem(${i},1)">${I.down}</button><button class="ib" aria-label="Remove" onclick="draftItems.splice(${i},1);drawItems()">${I.x}</button>
-    <div style="width:100%;display:flex;gap:8px;padding-left:30px"><input type="number" inputmode="numeric" min="1" placeholder="Sets ${e.sets}" value="${it.sets||''}" aria-label="Sets override" oninput="draftItems[${i}].sets=parseInt(this.value)||undefined" style="min-height:40px">
-    ${e.mode==='time'?`<input type="number" inputmode="numeric" min="1" placeholder="Secs ${e.secs}" value="${it.secs||''}" aria-label="Seconds override" oninput="draftItems[${i}].secs=parseInt(this.value)||undefined" style="min-height:40px">`:`<input type="number" inputmode="numeric" min="1" placeholder="Reps ${e.reps}" value="${it.reps||''}" aria-label="Reps override" oninput="draftItems[${i}].reps=parseInt(this.value)||undefined" style="min-height:40px">`}</div></div>`}).join(''):'<div class="small mut" style="padding:8px 0">No exercises yet.</div>';
+    <div style="width:100%;display:flex;gap:8px;padding-left:30px"><input type="number" inputmode="numeric" min="1" placeholder="Sets" value="${e.sets||''}" aria-label="Sets" oninput="draftItems[${i}].sets=parseInt(this.value)||3" style="min-height:40px">
+    ${e.mode==='time'?`<input type="number" inputmode="numeric" min="1" placeholder="Secs" value="${e.secs||''}" aria-label="Seconds" oninput="draftItems[${i}].secs=parseInt(this.value)||30" style="min-height:40px">`:`<input type="number" inputmode="numeric" min="1" placeholder="Reps" value="${e.reps||''}" aria-label="Reps" oninput="draftItems[${i}].reps=parseInt(this.value)||10" style="min-height:40px">`}</div></div>`).join(''):'<div class="small mut" style="padding:8px 0">No exercises yet. Type one below.</div>';
   box.querySelectorAll('.handle').forEach(h=>h.addEventListener('pointerdown',dragStart));
+}
+/* Exercise details: name is free text; sets/reps/time/rest/weight/notes/video are all optional. */
+function editItem(i){
+  const e=draftItems[i];if(!e)return;
+  sheet2(`<h2>Exercise</h2>
+   <label class="f"><span>Exercise</span><input id="itName" list="exNames" value="${esc(e.name)}" placeholder="Type any exercise" autocomplete="off" maxlength="80"></label>
+   <div class="seg" id="itMode"><button data-m="reps" class="${e.mode!=='time'?'on':''}">Reps</button><button data-m="time" class="${e.mode==='time'?'on':''}">Time</button></div>
+   <div class="g3"><label class="f"><span>Sets</span><input id="itSets" type="number" inputmode="numeric" min="1" value="${e.sets}"></label>
+   <label class="f" id="itRepsW" ${e.mode==='time'?'hidden':''}><span>Reps</span><input id="itReps" type="number" inputmode="numeric" min="1" value="${e.reps}"></label>
+   <label class="f" id="itSecsW" ${e.mode!=='time'?'hidden':''}><span>Seconds</span><input id="itSecs" type="number" inputmode="numeric" min="1" value="${e.secs}"></label>
+   <label class="f"><span>Rest (s)</span><input id="itRest" type="number" inputmode="numeric" min="0" value="${e.rest}"></label></div>
+   <label class="f"><span>Weight (optional)</span><input id="itWeight" value="${esc(e.weight)}" placeholder="e.g. 25 lb"></label>
+   <label class="f"><span>Notes (optional)</span><textarea id="itNotes" placeholder="Form cues…">${esc(e.notes)}</textarea></label>
+   ${videoPicker(e.video)}
+   <button class="btn p w" id="itSave">Done</button>
+   <button class="btn w d" style="margin-top:6px" id="itDel">Remove from routine</button>`,root=>{
+    wireVideoPicker(root,e.video);
+    const q=s=>root.querySelector(s),ms=q('#itMode');ms.dataset.m=e.mode==='time'?'time':'reps';
+    ms.onclick=ev=>{const b=ev.target.closest('button');if(!b)return;ms.dataset.m=b.dataset.m;ms.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));q('#itRepsW').hidden=b.dataset.m==='time';q('#itSecsW').hidden=b.dataset.m==='reps'};
+    q('#itSave').onclick=async()=>{
+      const name=q('#itName').value.trim();if(!name){toast('Type the exercise name');return}
+      let video;try{video=await collectVideo(root,e.video)}catch(x){return}
+      const n=(s,d)=>{const v=parseInt(q(s).value,10);return isNaN(v)?d:Math.max(0,v)};
+      Object.assign(e,{name,mode:ms.dataset.m,sets:n('#itSets',3)||1,reps:n('#itReps',10)||1,secs:n('#itSecs',30)||1,rest:n('#itRest',60),weight:q('#itWeight').value.trim(),notes:q('#itNotes').value.trim(),video});
+      closeSheet2();drawItems();
+    };
+    q('#itDel').onclick=()=>{draftItems.splice(i,1);closeSheet2();drawItems()};
+  });
 }
 function mvItem(i,d){const j=i+d;if(j<0||j>=draftItems.length)return;[draftItems[i],draftItems[j]]=[draftItems[j],draftItems[i]];drawItems()}
 function dragStart(ev){
@@ -472,57 +545,98 @@ function dragStart(ev){
   document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);
 }
 
-/* ---------- workout mode ---------- */
+/* ---------- guided workout session ----------
+ The session is saved to this device as you go (SESSION_KEY), with real timestamps instead of counters, so the
+ elapsed clock and rest timer stay correct if the app is backgrounded, the screen locks or Android kills the app.
+ Re-opening the app resumes the same session instead of starting a duplicate. */
+const SESSION_KEY='workoutPlanner.session';
 let W=null,timerInt=null;
+function saveSession(){if(W)try{localStorage.setItem(SESSION_KEY,JSON.stringify({rid:W.rid,i:W.i,done:W.done,startedAt:W.startedAt,restEnd:W.restEnd||0,date:W.date,owner:activeKey()}))}catch(e){}}
+function clearSession(){localStorage.removeItem(SESSION_KEY)}
+function sessionItems(rid){const r=rtById(rid);return r?r.items.map(i=>({it:i,e:i})):[]}
 function startWorkout(rid){
-  const r=rtById(rid);const items=r.items.map(i=>({it:i,e:exById(i.exId)})).filter(x=>x.e);
-  if(!items.length){toast('This routine has no exercises');return}
-  W={rid,items,i:0,done:items.map(x=>Array(x.it.sets||x.e.sets).fill(false)),rest:0};
-  const o=document.createElement('div');o.className='wo';o.id='wo';document.body.appendChild(o);document.body.style.overflow='hidden';drawW();
-  try{navigator.wakeLock?.request('screen').then(l=>W&&(W.lock=l)).catch(()=>{})}catch(e){}
+  const old=readJSON(SESSION_KEY);
+  if(old&&old.owner===activeKey()&&rtById(old.rid)){
+    if(old.rid===rid||confirm(`You have a ${rtById(old.rid).name} workout in progress. Continue it?`)){resumeWorkout(old);return}
+  }
+  const items=sessionItems(rid);
+  if(!items.length){toast('This routine has no exercises yet');return}
+  W={rid,items,i:0,done:items.map(x=>Array(Math.max(1,x.e.sets||1)).fill(false)),restEnd:0,startedAt:Date.now(),date:todayS()};
+  openW();
+}
+function resumeWorkout(s){
+  const items=sessionItems(s.rid);if(!items.length){clearSession();return}
+  // routine may have been edited (or synced from another phone) since: keep ticks where they still fit
+  const done=items.map((x,k)=>{const a=Array(Math.max(1,x.e.sets||1)).fill(false);(s.done[k]||[]).forEach((v,j)=>{if(j<a.length)a[j]=!!v});return a});
+  W={rid:s.rid,items,i:Math.min(s.i||0,items.length-1),done,restEnd:s.restEnd>Date.now()?s.restEnd:0,startedAt:s.startedAt||Date.now(),date:s.date||todayS()};
+  openW();toast('Resumed your workout');
+}
+function openW(){
+  $('#wo')?.remove();const o=document.createElement('div');o.className='wo';o.id='wo';document.body.appendChild(o);document.body.style.overflow='hidden';
+  saveSession();drawW();clearInterval(timerInt);timerInt=setInterval(tickW,500);lockScreen();
+}
+function lockScreen(){try{if(W&&!W.lock&&navigator.wakeLock)navigator.wakeLock.request('screen').then(l=>{if(W)W.lock=l;l.addEventListener('release',()=>{if(W)W.lock=null})}).catch(()=>{})}catch(e){}}
+const restLeft=()=>W&&W.restEnd?Math.max(0,Math.ceil((W.restEnd-Date.now())/1000)):0;
+function tickW(){
+  if(!W){clearInterval(timerInt);return}
+  const el=$('#woElapsed');if(el)el.textContent=fmtT(Math.floor((Date.now()-W.startedAt)/1000));
+  if(W.restEnd){const s=restLeft();if(s<=0){endRest(true)}else{const t=$('#restT');t?t.textContent=fmtT(s):drawW()}}
 }
 function drawW(){
-  const o=$('#wo');if(!o||!W)return;const {e,it}=W.items[W.i],sets=W.done[W.i];
+  const o=$('#wo');if(!o||!W)return;const {e}=W.items[W.i],sets=W.done[W.i];
   const totalSets=W.done.flat().length,doneSets=W.done.flat().filter(Boolean).length;
-  const amt=e.mode==='time'?`${it.secs||e.secs}s`:`${it.reps||e.reps} reps`;
-  o.innerHTML=`<div class="row"><button class="ib" aria-label="Exit" onclick="exitW()">${I.x}</button><div class="sp" style="text-align:center;font-weight:600">${esc(rtById(W.rid)?.name||'')}</div><span class="small mut" style="width:44px;text-align:right">${W.i+1}/${W.items.length}</span></div>
+  const amt=e.mode==='time'?`${e.secs}s`:`${e.reps} reps`,rl=restLeft();
+  o.innerHTML=`<div class="row"><button class="ib" aria-label="Exit" onclick="exitW()">${I.x}</button><div class="sp" style="text-align:center"><div style="font-weight:600">${esc(rtById(W.rid)?.name||'')}</div><div class="small mut"><span id="woElapsed">${fmtT(Math.floor((Date.now()-W.startedAt)/1000))}</span> elapsed</div></div><span class="small mut" style="width:44px;text-align:right" id="woPos">${W.i+1}/${W.items.length}</span></div>
    <div class="prog"><i style="width:${doneSets/totalSets*100}%"></i></div>
+   <div class="small mut" id="woSets">${doneSets} of ${totalSets} sets done</div>
    <div class="big" id="woName" style="font-size:30px">${esc(e.name)}</div>
-   <div class="mut">${sets.length} × ${amt}${e.weight?' · '+esc(e.weight):''} · rest ${e.rest}s</div>
+   <div class="mut">${sets.length} × ${amt}${e.weight?' · '+esc(e.weight):''}${e.rest>0?' · rest '+e.rest+'s':''}</div>
    ${e.notes?`<p class="small mut">${esc(e.notes)}</p>`:''}
    ${e.video?`<button class="btn w" id="woVideo" style="margin:10px 0" onclick="showVideo(W.items[W.i].e.name,W.items[W.i].e.video)">${I.video} How-to video</button>`:''}
-   ${W.rest>0?`<div class="card" style="margin-top:12px" id="restCard"><div class="small mut" style="text-align:center">Rest</div><div class="timer" id="restT">${fmtT(W.rest)}</div><div class="g2"><button class="btn" onclick="W.rest+=15;drawW()">+15s</button><button class="btn" id="skipRest" onclick="endRest()">Skip</button></div></div>`:''}
+   ${rl>0?`<div class="card" style="margin-top:12px" id="restCard"><div class="small mut" style="text-align:center">Rest</div><div class="timer" id="restT">${fmtT(rl)}</div><div class="g2"><button class="btn" onclick="W.restEnd+=15000;saveSession();drawW()">+15s</button><button class="btn" id="skipRest" onclick="endRest()">Skip</button></div></div>`:''}
    <div style="margin-top:8px">${sets.map((d,k)=>`<div class="setrow"><button class="setbtn ${d?'on':''}" data-set="${k}" aria-label="Set ${k+1}" onclick="toggleSet(${k})">${d?I.ok.replace('<svg','<svg width="24" height="24"'):k+1}</button><div class="sp"><b>Set ${k+1}</b><div class="small mut">${amt}</div></div></div>`).join('')}</div>
-   <div class="g2" style="margin-top:18px"><button class="btn" ${W.i===0?'disabled style="opacity:.4"':''} onclick="W.i--;drawW()">Back</button>
-   ${W.i<W.items.length-1?`<button class="btn p" id="woNext" onclick="W.i++;W.rest=0;drawW()">Next</button>`:`<button class="btn p" id="woFinish" onclick="finishW()">Finish</button>`}</div>`;
+   <label class="row small mut" style="margin-top:12px;min-height:40px"><input type="checkbox" id="autoRest" ${S.settings?.autoRest===false?'':'checked'} onchange="S.settings={...(S.settings||{}),autoRest:this.checked};save()"> Rest timer after each set</label>
+   <div class="g2" style="margin-top:12px"><button class="btn" id="woPrev" ${W.i===0?'disabled style="opacity:.4"':''} onclick="W.i--;W.restEnd=0;saveSession();drawW()">Previous</button>
+   ${W.i<W.items.length-1?`<button class="btn p" id="woNext" onclick="W.i++;W.restEnd=0;saveSession();drawW()">Next</button>`:`<button class="btn p" id="woFinish" onclick="finishW()">Finish</button>`}</div>
+   ${W.i<W.items.length-1?`<button class="btn w g" style="margin-top:8px" id="woFinishEarly" onclick="finishW()">Finish workout</button>`:''}`;
 }
-const fmtT=s=>`${Math.floor(s/60)}:${pad(s%60)}`;
+const fmtT=s=>s>=3600?`${Math.floor(s/3600)}:${pad(Math.floor(s/60)%60)}:${pad(s%60)}`:`${Math.floor(s/60)}:${pad(s%60)}`;
 function toggleSet(k){
-  const a=W.done[W.i];a[k]=!a[k];
-  if(a[k]&&W.items[W.i].e.rest>0&&!(a.every(Boolean)&&W.i===W.items.length-1))startRest(W.items[W.i].e.rest);
-  drawW();
+  const a=W.done[W.i];a[k]=!a[k];const rest=W.items[W.i].e.rest;
+  if(a[k]&&rest>0&&S.settings?.autoRest!==false&&!(a.every(Boolean)&&W.i===W.items.length-1))W.restEnd=Date.now()+rest*1000;
+  if(!a[k])W.restEnd=0;
+  saveSession();drawW();
 }
-function startRest(s){W.rest=s;clearInterval(timerInt);timerInt=setInterval(()=>{if(!W){clearInterval(timerInt);return}W.rest--;
-  if(W.rest<=0){endRest();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}beep()}else{const t=$('#restT');t?t.textContent=fmtT(W.rest):drawW()}},1000)}
-function endRest(){clearInterval(timerInt);if(W){W.rest=0;const a=W.done[W.i];if(a.every(Boolean)&&W.i<W.items.length-1)W.i++;drawW()}}
+function endRest(alarm){if(!W)return;W.restEnd=0;if(alarm){try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}beep()}
+  const a=W.done[W.i];if(a.every(Boolean)&&W.i<W.items.length-1)W.i++;saveSession();drawW()}
 function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.value=.08;o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+.25)}catch(e){}}
-function closeW(){clearInterval(timerInt);try{W?.lock?.release()}catch(e){}W=null;$('#wo')?.remove();document.body.style.overflow=''}
-function exitW(){const any=W.done.flat().some(Boolean);if(any&&!confirm('Leave workout? Progress for this session is not saved.'))return;closeW()}
+function closeW(){clearInterval(timerInt);try{W?.lock?.release()}catch(e){}W=null;clearSession();$('#wo')?.remove();document.body.style.overflow='';setTimeout(()=>Sync.applyDeferred(),0)}
+function exitW(){const any=W.done.flat().some(Boolean);if(any&&!confirm('Leave this workout? It won\'t be logged.'))return;closeW()}
 function finishW(){
-  const n=W.done.flat().filter(Boolean).length;
-  S.history[todayS()]={routineId:W.rid,name:rtById(W.rid)?.name,at:Date.now(),sets:n};save();closeW();tab='today';render();toast('Workout done 💪');
+  const n=W.done.flat().filter(Boolean).length,total=W.done.flat().length;
+  if(!n&&!confirm('No sets ticked yet. Log the workout anyway?'))return;
+  const dur=Math.round((Date.now()-W.startedAt)/1000),d=W.date||todayS(),prev=S.history[d];
+  // One entry per day: doing a second session the same day extends the entry instead of duplicating it.
+  S.history[d]=prev?{...prev,routineId:W.rid,name:rtById(W.rid)?.name,at:Date.now(),sets:(prev.sets||0)+n,totalSets:(prev.totalSets||0)+total,duration:(prev.duration||0)+dur,sessions:(prev.sessions||1)+1}
+    :{routineId:W.rid,name:rtById(W.rid)?.name,at:Date.now(),startedAt:W.startedAt,sets:n,totalSets:total,duration:dur,sessions:1};
+  save();closeW();tab='today';render();toast(`Workout logged · ${fmtDur(dur)} · ${n} sets 💪`);
 }
+const fmtDur=s=>s<60?`${s}s`:s<3600?`${Math.round(s/60)} min`:`${Math.floor(s/3600)} h ${Math.round(s/60)%60} min`;
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&W){tickW();drawW();lockScreen()}});
 
 /* ---------- more / settings ---------- */
 function moreSheet(){
+  const u=ACC&&ACC.mode==='user';
   sheet(`<h2>More</h2>
    <div class="list">
+    <div class="it" style="cursor:pointer" id="mAccount" onclick="accountSheet()">${I.user.replace('<svg','<svg width="22" height="22"')}<div class="sp"><div class="t">${u?esc(ACC.email||ACC.name||'Account'):'Guest'}</div><div class="small mut">${u?'Signed in · syncs across your devices':'Data stays on this phone only'}</div></div></div>
     <div class="it" style="cursor:pointer" id="mFeedback" onclick="feedbackSheet()"><div class="sp"><div class="t">Send feedback</div><div class="small mut">Bug, idea or anything else</div></div></div>
+    <div class="it" style="cursor:pointer" id="mUpdate" onclick="Updater.check(true)"><div class="sp"><div class="t">Check for updates</div><div class="small mut">Version ${APP_VERSION}</div></div></div>
     <div class="it" style="cursor:pointer" id="mExport" onclick="exportData()"><div class="sp"><div class="t">Export backup</div><div class="small mut">Download a .json file</div></div></div>
-    <div class="it" style="cursor:pointer" id="mImport" onclick="importFile.click()"><div class="sp"><div class="t">Import backup</div><div class="small mut">Replaces everything on this phone</div></div></div>
-    <div class="it" style="cursor:pointer" onclick="if(confirm('Delete all data and start over with the examples?')){S=seed();save();closeSheet();render()}"><div class="sp"><div class="t" style="color:#e5484d">Reset app</div></div></div>
+    <div class="it" style="cursor:pointer" id="mImport" onclick="importFile.click()"><div class="sp"><div class="t">Import backup</div><div class="small mut">Replaces your current data</div></div></div>
+    <div class="it" style="cursor:pointer" onclick="if(confirm('Delete all ${u?'account':'guest'} data and start over?')){const f=S.feedbackQueue;S=seed();S.feedbackQueue=f;save();closeSheet();render()}"><div class="sp"><div class="t" style="color:#e5484d">Reset ${u?'account data':'app'}</div></div></div>
    </div>
-   <p class="small mut">Everything is stored only on this device. Uploaded videos stay on this phone and are not included in backups (video links are). Version ${APP_VERSION}.</p>
+   <p class="small mut">${u?'Routines, schedule, history and video links sync to your account.':'Guest mode: everything is stored only on this device.'} Uploaded videos stay on the phone they were added on (video links work everywhere). Version ${APP_VERSION}.</p>
    <button class="btn w" onclick="closeSheet()">Close</button>`);
 }
 function exportData(){
@@ -530,15 +644,15 @@ function exportData(){
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`workout-backup-${todayS()}.json`;document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);closeSheet();
-  const files=[...S.exercises,...S.routines].filter(x=>x.video?.type==='file').length;
+  const files=S.routines.flatMap(r=>[r,...r.items]).filter(x=>x.video?.type==='file').length;
   toast(files?`Backup saved. ${files} uploaded video(s) stay on this phone only.`:'Backup saved');
 }
 $('#importFile').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
   try{const d=JSON.parse(await f.text());
-    if(!Array.isArray(d.exercises)||!Array.isArray(d.routines)||!d.schedule)throw new Error('Not a workout backup');
-    if(!confirm(`Import ${d.exercises.length} exercises and ${d.routines.length} routines? This replaces your current data.`))return;
-    S={v:1,exercises:d.exercises,routines:d.routines,schedule:{...seed().schedule,...d.schedule},changes:d.changes||[],history:d.history||{},feedbackQueue:d.feedbackQueue||[]};
+    if(!Array.isArray(d.routines)||!d.schedule)throw new Error('Not a workout backup');
+    if(!confirm(`Import ${d.routines.length} routine(s)? This replaces your current data.`))return;
+    const f=S.feedbackQueue;S=migrate(d);S.feedbackQueue=f;
     save();closeSheet();render();toast('Backup imported');
   }catch(err){toast('Import failed: '+err.message)}
 };
@@ -597,10 +711,253 @@ function copyText(t){
 addEventListener('online',()=>{if(S.feedbackQueue.length){toast(`Back online — ${S.feedbackQueue.length} feedback note(s) ready to send`);if(tab==='today'&&!$('#sheet')&&!W)render()}});
 addEventListener('offline',()=>{if(tab==='today'&&!$('#sheet')&&!W)render()});
 
+/* ---------- accounts (Firebase via backend-firebase.js; guest = this device only) ---------- */
+const NATIVE_APP=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+function capPlugin(name){try{const C=window.Capacitor;if(!NATIVE_APP||!(C.isPluginAvailable?C.isPluginAvailable(name):C.Plugins?.[name]))return null;return C.Plugins?.[name]||(C.registerPlugin&&C.registerPlugin(name))||null}catch(e){return null}}
+const stripLocal=s=>{const o={...s};delete o.feedbackQueue;return o};
+const Sync={
+  B:null,signedIn:false,busy:false,again:false,timer:null,deferred:null,lastOk:0,err:'',
+  meta(){return ACC?.mode==='user'?(readJSON(META_KEY(ACC.uid))||{}):{}},
+  setMeta(m){if(ACC?.mode==='user')localStorage.setItem(META_KEY(ACC.uid),JSON.stringify(m))},
+  changed(){
+    if(ACC?.mode!=='user')return;
+    this.deferred=null; // a local edit wins over a remote copy that arrived while editing
+    const m=this.meta();m.dirty=true;this.setMeta(m);
+    clearTimeout(this.timer);this.timer=setTimeout(()=>this.run('change'),1500);this.status();
+  },
+  async run(reason){
+    if(ACC?.mode!=='user'||!this.B||!this.signedIn)return;
+    if(this.busy){this.again=true;return}
+    if(!navigator.onLine){this.status();return}
+    this.busy=true;this.status();const uid=ACC.uid;
+    try{
+      const m=this.meta(),remote=await this.B.pull(uid);
+      if(ACC?.mode!=='user'||ACC.uid!==uid)return;
+      if(remote&&remote.updatedAt>(m.syncedAt||0)&&!(m.dirty&&(S.updatedAt||0)>remote.updatedAt)){
+        // another device saved something newer: take it (whole-document, newest wins)
+        this.setMeta({syncedAt:remote.updatedAt,dirty:false});this.applyRemote(remote);
+      }else if(m.dirty||!remote){
+        if(!S.updatedAt)S.updatedAt=Date.now();
+        const at=S.updatedAt;await this.B.push(uid,stripLocal(S),at,DEVICE_ID);
+        this.setMeta({syncedAt:at,dirty:(S.updatedAt||0)>at});
+      }
+      this.lastOk=Date.now();this.err='';
+    }catch(e){this.err=e&&e.message||String(e);console.warn('sync',reason,e)}
+    finally{this.busy=false;this.status();if(this.again){this.again=false;this.run('again')}}
+  },
+  applyRemote(remote){const n=migrate(remote.state);n.feedbackQueue=S.feedbackQueue;n.updatedAt=remote.updatedAt;
+    if(W||$('#sheet')){this.deferred=n;return}this.swap(n)},
+  swap(n){S=n;persist();if(!$('#welcome'))render()},
+  applyDeferred(){if(this.deferred&&!W&&!$('#sheet')){const n=this.deferred;this.deferred=null;this.swap(n)}},
+  text(){
+    if(ACC?.mode!=='user')return '';
+    if(!this.signedIn)return ['off','Not connected yet'];
+    if(this.busy)return ['busy','Syncing…'];
+    if(!navigator.onLine)return ['off','Offline · changes sync when you\'re back online'];
+    if(this.err)return ['off','Sync problem: '+this.err];
+    if(this.meta().dirty)return ['busy','Saving to your account…'];
+    return ['',this.lastOk?'Synced · '+new Date(this.lastOk).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'Synced'];
+  },
+  status(){const el=$('#syncStatus');if(!el)return;const [c,t]=this.text();el.innerHTML=`<span class="syncdot ${c}"></span>${esc(t)}`},
+};
+const Accounts={
+  B:null,configured:false,started:null,
+  async load(){
+    if(window.WorkoutBackendOverride)this.B=window.WorkoutBackendOverride; // tests inject a mock backend here
+    else{
+      const cfg=window.FIREBASE_CONFIG;if(!cfg||!cfg.apiKey||!cfg.projectId)return null;
+      const m=await import('./backend-firebase.js');this.B=m.createFirebaseBackend(cfg,{emulator:window.FIREBASE_EMULATOR||null});
+    }
+    Sync.B=this.B;this.configured=true;return this.B;
+  },
+  start(){return this.started||(this.started=(async()=>{
+    try{await this.load()}catch(e){console.warn('accounts unavailable',e);this.configured=false;return}
+    if(!this.B)return;
+    const u=await this.B.init().catch(()=>null);
+    if(ACC?.mode==='user'){
+      if(u&&u.uid===ACC.uid){Sync.signedIn=true;Sync.run('open')}
+      else{toast('You were signed out. Sign in again to sync.');await leaveAccount(true)}
+    }
+    if($('#welcome'))drawWelcome();
+  })())},
+};
+function setAcc(a){ACC=a;localStorage.setItem(ACC_KEY,JSON.stringify(a))}
+async function enterAccount(u,carry){
+  if(!u)return; // redirect sign-in on the web finishes after reload
+  const guest=migrate(readJSON(GUEST_KEY)||seed());
+  let remote=null,pullFailed=false;
+  try{remote=await Accounts.B.pull(u.uid)}catch(e){pullFailed=true}
+  const cached=readJSON(USER_KEY(u.uid));let next,meta,moved=false;
+  if(remote){next=migrate(remote.state);next.updatedAt=remote.updatedAt;meta={syncedAt:remote.updatedAt,dirty:false}}
+  else if(cached){next=migrate(cached);meta={...(readJSON(META_KEY(u.uid))||{}),dirty:true}}
+  else{
+    if(carry===undefined&&hasData(guest)&&!pullFailed)carry=await askCarry();
+    if(carry&&hasData(guest)){next=guest;moved=true}else next=seed();
+    next.updatedAt=Date.now();meta={syncedAt:0,dirty:true};
+  }
+  next.feedbackQueue=S.feedbackQueue||[];
+  setAcc({mode:'user',uid:u.uid,email:u.email||'',name:u.name||'',provider:u.provider||''});
+  S=next;persist();localStorage.setItem(META_KEY(u.uid),JSON.stringify(meta));
+  if(moved){const g=seed();localStorage.setItem(GUEST_KEY,JSON.stringify(g))} // guest data now lives in the account
+  Sync.signedIn=true;Sync.err='';$('#welcome')?.remove();closeSheet();tab='today';render();
+  toast(moved?'Signed in · your guest data is now in your account':'Signed in as '+(u.email||u.name||'you'));
+  Sync.run('signin');
+}
+function askCarry(){return new Promise(res=>{sheet2(`<h2>Bring your data?</h2><p class="mut">This phone has routines or history from guest mode. Move them into your new account so they sync to your other devices?</p>
+  <button class="btn p w" id="carryYes">Yes, bring them</button><button class="btn w" style="margin-top:8px" id="carryNo">No, start fresh</button>`,r=>{
+  r.querySelector('#carryYes').onclick=()=>{closeSheet2();res(true)};r.querySelector('#carryNo').onclick=()=>{closeSheet2();res(false)}})})}
+async function leaveAccount(silent){
+  if(ACC?.mode!=='user'){return}
+  const uid=ACC.uid;
+  if(!silent){
+    if(Sync.meta().dirty){await Sync.run('signout');if(Sync.meta().dirty&&!confirm('Some changes haven\'t synced yet (offline?). Sign out anyway and lose them?'))return}
+    try{await Accounts.B?.signOut()}catch(e){}
+  }
+  localStorage.removeItem(USER_KEY(uid));localStorage.removeItem(META_KEY(uid));
+  const f=S.feedbackQueue;setAcc({mode:'guest'});Sync.signedIn=false;S=migrate(readJSON(GUEST_KEY)||seed());S.feedbackQueue=f;persist();
+  closeSheet();render();if(!silent)toast('Signed out · back in guest mode');
+}
+function accountSheet(){
+  if(ACC?.mode==='user'){
+    sheet(`<h2>Account</h2><div class="card row"><span class="av" style="width:44px;height:44px;font-size:18px">${esc((ACC.email||ACC.name||'?')[0].toUpperCase())}</span><div class="sp"><div class="t" id="accEmail">${esc(ACC.email||ACC.name)}</div><div class="small mut">${ACC.provider==='google.com'?'Google account':'Email account'}</div></div></div>
+     <p class="small" id="syncStatus"></p>
+     <p class="small mut">Your routines, schedule, cheat &amp; rest days, history and video links sync to every device you sign in on. Uploaded video files stay on the phone they were added on.</p>
+     <button class="btn w" id="syncNow" onclick="Sync.run('manual')">Sync now</button>
+     <button class="btn w d" style="margin-top:8px" id="signOut" onclick="leaveAccount()">Sign out</button>`);Sync.status();return;
+  }
+  sheet(`<h2>Account</h2><div class="card row">${I.user.replace('<svg','<svg width="32" height="32"')}<div class="sp"><div class="t">Guest</div><div class="small mut">Data stays on this phone only and won't sync to other devices.</div></div></div>
+   ${Accounts.configured?`<p class="small mut">Create an account to keep your routines on all your devices. Your guest data can come with you.</p>
+   <button class="btn p w" id="accCreate" onclick="authSheet('signup')">Create account</button><button class="btn w" style="margin-top:8px" id="accSignIn" onclick="authSheet('signin')">Sign in</button>`
+   :`<div class="banner" id="accSoon">Accounts that sync across your devices are coming soon. Until then everything is saved on this phone.</div>`}
+   <button class="btn w g" style="margin-top:6px" onclick="closeSheet()">Close</button>`);
+}
+function authSheet(mode){
+  if(!Accounts.configured){accountSheet();return}
+  const gOK=!NATIVE_APP||Accounts.B.nativeGoogle,guestHas=hasData(ACC?.mode==='user'?null:S);
+  sheet(`<h2 id="authTitle">${mode==='signup'?'Create account':'Sign in'}</h2>
+   ${gOK?`<button class="btn w gbtn" id="googleBtn"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.5 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2-1.9 3.2-4.7 3.2-8z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.7c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.8 14.2a6.6 6.6 0 0 1 0-4.3V7.1H2.1a11 11 0 0 0 0 9.9z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2.1 7.1l3.7 2.8C6.7 7.3 9.1 5.4 12 5.4z"/></svg> Continue with Google</button><div class="or">or use email</div>`:''}
+   <div class="seg" id="authSeg"><button data-m="signin" class="${mode!=='signup'?'on':''}">Sign in</button><button data-m="signup" class="${mode==='signup'?'on':''}">Create account</button></div>
+   <label class="f"><span>Email</span><input id="authEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="none" placeholder="you@example.com"></label>
+   <label class="f"><span>Password</span><input id="authPw" type="password" autocomplete="${mode==='signup'?'new-password':'current-password'}" placeholder="At least 6 characters"></label>
+   <label class="row" id="carryRow" style="margin-bottom:12px;min-height:44px" ${mode==='signup'&&guestHas?'':'hidden'}><input type="checkbox" id="authCarry" checked> <span class="small">Bring the routines and history on this phone into my account</span></label>
+   <div class="err" id="authErr" role="alert"></div>
+   <button class="btn p w" id="authGo">${mode==='signup'?'Create account':'Sign in'}</button>
+   <button class="btn w g" style="margin-top:4px" id="authForgot" ${mode==='signup'?'hidden':''}>Forgot password?</button>
+   <p class="small mut" style="text-align:center">Or keep using the app as a guest. Guest data stays on this phone only.</p>`,root=>{
+    const q=s=>root.querySelector(s),seg=q('#authSeg');let m=mode==='signup'?'signup':'signin';
+    const setM=x=>{m=x;seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.m===x));q('#authTitle').textContent=x==='signup'?'Create account':'Sign in';q('#authGo').textContent=x==='signup'?'Create account':'Sign in';
+      q('#carryRow').hidden=!(x==='signup'&&guestHas);q('#authForgot').hidden=x==='signup';q('#authPw').autocomplete=x==='signup'?'new-password':'current-password';q('#authErr').textContent=''};
+    seg.onclick=e=>{const b=e.target.closest('button');if(b)setM(b.dataset.m)};
+    const busy=(b,on)=>{b.disabled=on;b.style.opacity=on?.6:1};
+    const fail=e=>{q('#authErr').textContent=e&&e.message||'Something went wrong'};
+    q('#authGo').onclick=async()=>{
+      const email=q('#authEmail').value.trim(),pw=q('#authPw').value;
+      if(!/^\S+@\S+\.\S+$/.test(email)){fail({message:'Enter your email address.'});return}
+      if(pw.length<6){fail({message:'Password needs at least 6 characters.'});return}
+      if(!navigator.onLine){fail({message:'You\'re offline. Connect to sign in.'});return}
+      const b=q('#authGo');busy(b,true);q('#authErr').textContent='';
+      try{const u=m==='signup'?await Accounts.B.signUp(email,pw):await Accounts.B.signIn(email,pw);
+        await enterAccount(u,m==='signup'?q('#authCarry').checked&&guestHas:undefined)}catch(e){fail(e)}finally{busy(b,false)}
+    };
+    q('#authPw').addEventListener('keydown',e=>{if(e.key==='Enter')q('#authGo').click()});
+    q('#authForgot').onclick=async()=>{const email=q('#authEmail').value.trim();if(!/^\S+@\S+\.\S+$/.test(email)){fail({message:'Type your email above first.'});return}
+      try{await Accounts.B.reset(email);toast('Password reset email sent')}catch(e){fail(e)}};
+    const g=q('#googleBtn');if(g)g.onclick=async()=>{busy(g,true);try{const u=await Accounts.B.google();await enterAccount(u,m==='signup'?q('#authCarry').checked&&guestHas:undefined)}catch(e){fail(e)}finally{busy(g,false)}};
+  });
+}
+/* first launch */
+function showWelcome(){if($('#welcome'))return;const w=document.createElement('div');w.className='welcome';w.id='welcome';document.body.appendChild(w);drawWelcome()}
+function drawWelcome(){
+  const w=$('#welcome');if(!w)return;
+  w.innerHTML=`<div class="logo">${I.w}</div><h1>Workout</h1><p class="mut" style="margin:0 0 28px">Your routines, rest days and cheat days, in one simple plan.</p>
+   ${Accounts.configured?`<button class="btn p w" id="wCreate" onclick="authSheet('signup')">Create account</button><button class="btn w" style="margin-top:10px" id="wSignIn" onclick="authSheet('signin')">Sign in</button><button class="btn w g" style="margin-top:10px" id="wGuest" onclick="continueGuest()">Continue as guest</button>
+     <p class="small mut" style="text-align:center;margin-top:14px">Guest data stays on this phone and doesn't sync to other devices.</p>`
+   :`<button class="btn p w" id="wGuest" onclick="continueGuest()">Continue as guest</button>
+     <p class="small mut" style="text-align:center;margin-top:14px" id="wSoon">Accounts that sync across your devices are coming soon. Your data stays on this phone.</p>`}`;
+}
+function continueGuest(){setAcc({mode:'guest'});$('#welcome')?.remove();closeSheet();render()}
+
+/* ---------- automatic updates (Android app) ----------
+ On launch (and on resume, at most every 6 h) the app reads this repo's GitHub releases, takes the newest
+ non-draft release that has a Workout-X.Y.Z.apk asset, and offers it if it's newer than APP_VERSION.
+ "Update now" downloads the APK natively and opens Android's installer (one tap on Install). */
+const cmpVer=(a,b)=>{const x=String(a).split('.').map(n=>parseInt(n)||0),y=String(b).split('.').map(n=>parseInt(n)||0);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0)?1:-1}return 0};
+const Updater={
+  last:0,showing:false,pending:null,
+  feed(){return window.WORKOUT_UPDATE_FEED||`https://api.github.com/repos/${UPDATE_REPO}/releases?per_page=10`},
+  async latest(){
+    const r=await fetch(this.feed(),{headers:{Accept:'application/vnd.github+json'},cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const list=await r.json();
+    for(const rel of Array.isArray(list)?list:[list]){
+      if(!rel||rel.draft||rel.prerelease)continue;
+      const a=(rel.assets||[]).find(a=>/^Workout-\d+\.\d+\.\d+\.apk$/i.test(a.name||''));
+      if(a)return {version:String(rel.tag_name||a.name.replace(/^Workout-|\.apk$/gi,'')).replace(/^v/i,''),notes:rel.body||'',url:a.browser_download_url,name:a.name,size:a.size||0,page:rel.html_url};
+    }
+    return null;
+  },
+  async check(manual){
+    if(!manual&&!NATIVE_APP&&!window.WORKOUT_UPDATE_FEED)return; // the web version updates itself (service worker)
+    if(!manual&&Date.now()-this.last<6*3600e3)return;
+    if(!navigator.onLine){if(manual)toast('You\'re offline');return}
+    this.last=Date.now();
+    try{
+      const l=await this.latest();
+      if(l&&cmpVer(l.version,APP_VERSION)>0){if(!manual&&(W||$('#welcome'))){this.pending=l;return}this.prompt(l)}
+      else if(manual)toast(`You're up to date (v${APP_VERSION})`);
+    }catch(e){console.warn('update check',e);if(manual)toast('Couldn\'t check for updates. Try again later.')}
+  },
+  prompt(l){
+    if(this.showing)return;this.showing=true;
+    const notes=esc(l.notes.replace(/\r/g,'').slice(0,600)).replace(/\n/g,'<br>');
+    const fn=$('#sheet')?sheet2:sheet;
+    const root=fn(`<h2>Update available</h2><p id="updText">Version <b id="updVer">${esc(l.version)}</b> is ready. You have ${APP_VERSION}.${l.size?` (${(l.size/1e6).toFixed(1)} MB)`:''}</p>
+     ${notes?`<div class="small mut" style="margin:-4px 0 12px;max-height:160px;overflow:auto">${notes}</div>`:''}
+     <div class="bar" id="updBar" hidden><i></i></div>
+     <button class="btn p w" id="updNow">Update now</button><button class="btn w g" style="margin-top:6px" id="updLater">Later</button>`);
+    const bg=root.parentNode,done=()=>{this.showing=false};
+    new MutationObserver((_,o)=>{if(!bg.isConnected){done();o.disconnect()}}).observe(document.body,{childList:true});
+    root.querySelector('#updLater').onclick=()=>{bg.id==='sheet2'?closeSheet2():closeSheet()};
+    root.querySelector('#updNow').onclick=()=>this.install(l,root);
+  },
+  async install(l,root){
+    const q=s=>root.querySelector(s),AU=capPlugin('AppUpdater'),btn=q('#updNow');
+    if(!AU){ // web / preview: just open the download
+      const a=document.createElement('a');a.href=l.url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();return;
+    }
+    btn.disabled=true;btn.textContent='Downloading…';q('#updBar').hidden=false;
+    let h=null;try{h=await AU.addListener('progress',p=>{const pc=p.total>0?Math.round(p.loaded/p.total*100):0;q('#updBar i').style.width=pc+'%';btn.textContent=`Downloading… ${pc}%`})}catch(e){}
+    try{
+      const r=await AU.downloadAndInstall({url:l.url,fileName:l.name});
+      q('#updBar i').style.width='100%';
+      if(r&&r.status==='needs-permission'){
+        q('#updText').innerHTML='One more step: allow <b>Install unknown apps</b> for Workout, then come back. The update installs right after.';
+        btn.disabled=false;btn.textContent='Open settings';btn.onclick=()=>AU.openInstallSettings();
+        this.waitPerm={l,root};
+      }else{q('#updText').innerHTML='Tap <b>Install</b> on the next screen to finish. Your data stays.';btn.textContent='Install';btn.disabled=false;btn.onclick=()=>AU.installDownloaded({fileName:l.name})}
+    }catch(e){q('#updText').textContent='Download failed: '+(e&&e.message||e)+'. Check your connection and try again.';btn.disabled=false;btn.textContent='Try again';}
+    finally{try{h&&h.remove()}catch(e){}}
+  },
+  async resumed(){
+    const w=this.waitPerm,AU=capPlugin('AppUpdater');
+    if(w&&AU){try{const c=await AU.canInstall();if(c&&c.allowed){this.waitPerm=null;await AU.installDownloaded({fileName:w.l.name})}}catch(e){}}
+    if(this.pending&&!W&&!$('#welcome')){const l=this.pending;this.pending=null;this.prompt(l)}
+    this.check(false);
+  },
+};
+
 /* ---------- day rollover & boot ---------- */
 let lastDay=todayS();
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&todayS()!==lastDay){lastDay=todayS();if(!W&&!$('#sheet'))render()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;
+  if(todayS()!==lastDay){lastDay=todayS();if(!W&&!$('#sheet'))render()}
+  Sync.run('resume');Updater.resumed();});
+addEventListener('online',()=>Sync.run('online'));
 render();
+if(!ACC)showWelcome();
+Accounts.start();
+setTimeout(()=>Updater.check(false),1200);
+setTimeout(gcVideos,4000);
+{const s=readJSON(SESSION_KEY);if(s&&s.owner===activeKey()&&rtById(s.rid)&&ACC)resumeWorkout(s)}
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW failed',e)));
 }

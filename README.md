@@ -1,17 +1,23 @@
-# Workout Planner
+# Workout
 
-Minimal mobile workout planner (PWA). Everything is stored on the phone: no accounts, no server.
+Minimal mobile workout planner: routines with your own typed exercises, rest days and cheat days, scheduling, how-to videos, guided workouts.
 
-Live app (after enabling Pages): https://nexplexthecoder.github.io/workout-app/
+- Web app: https://nexplexthecoder.github.io/workout-app/
+- Android app: download the latest `Workout-X.Y.Z.apk` from [Releases](https://github.com/Nexplexthecoder/workout-app/releases). The installed app checks Releases on launch and offers new versions automatically.
 
-## Publish with GitHub Pages
-1. Push these files to the root of the `main` branch of `Nexplexthecoder/workout-app`.
-2. In the repo, open Settings → Pages → Build and deployment → Source: "Deploy from a branch", Branch: `main`, folder `/ (root)` → Save.
-3. Wait 1–2 minutes, then open the link above on your phone in Chrome and use ⋮ → "Add to Home screen" / "Install app".
+## Accounts and sync (Firebase)
+- **Guest**: everything stays on the device. Nothing syncs.
+- **Account** (email/password or Google): routines, schedule, history and video links sync through Firestore doc `users/{uid}`. Uploaded video files stay on the phone they were added on.
+- Accounts stay off ("coming soon") until `firebase-config.js` has the project's web config. Security rules: `firestore.rules`.
+
+## Files
+- `index.html`: the app
+- `firebase-config.js`: Firebase web config (null = accounts off)
+- `backend-firebase.js`: auth + sync adapter; `vendor/firebase.js` is the bundled Firebase JS SDK (built from `src/firebase-entry.js`)
+- `sw.js`: offline cache. Bump `VERSION` when files change.
+
+## Releasing an Android update
+Build with the Android wrapper (`./build-apk.sh X.Y.Z`, same signing key every time), then publish a GitHub release `vX.Y.Z` with the asset `Workout-X.Y.Z.apk`.
 
 ## Feedback
-The in-app Feedback button opens a prefilled issue on this repo (`FEEDBACK_REPO` at the top of `index.html`).
-Optional: create the labels `bug`, `enhancement` and `question` (GitHub creates these by default in new repos).
-
-## Updating
-After changing files, bump `VERSION` in `sw.js` so installed phones pick up the new version.
+The in-app Feedback button opens a prefilled issue on this repo.
