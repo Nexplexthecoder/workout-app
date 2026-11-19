@@ -7,9 +7,9 @@ Minimal mobile workout planner: routines with your own typed exercises, rest day
 
 ## Accounts and sync (Firebase)
 - **Guest**: everything stays on the device. Nothing syncs.
-- **Account** (email/password, and Google once native Google is configured): routines, schedule, history and video links sync through Firestore doc `users/{uid}`. Uploaded video files stay on the phone they were added on.
+- **Account** (email/password, and Google on the Android app): routines, schedule, history and video links sync through Firestore doc `users/{uid}`. Uploaded video files stay on the phone they were added on.
 - Web config lives in `firebase-config.js` (public client identifiers, not secrets). Security rules: `firestore.rules`.
-- Native Google sign-in on Android needs a valid `firebase/google-services.json` in the Android project; see `/workspace/workout-app-android/firebase/README.md`. Until then the Google button shows "coming soon".
+- Native Google sign-in on Android needs a valid `firebase/google-services.json` in the Android project; see `/workspace/workout-app-android/firebase/README.md`. Without that file the Google button shows "coming soon". With it (as of 1.1.2) the button is enabled and uses the native account picker.
 
 ## Files
 - `index.html`: the app
