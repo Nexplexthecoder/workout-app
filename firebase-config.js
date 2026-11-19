@@ -1,8 +1,15 @@
 /* ===== Firebase config (the ONE place to plug in accounts) =====
- * Accounts + cross-device sync stay OFF ("coming soon") while this is null.
- * Paste the web app config from Firebase console → Project settings → Your apps → Web app → SDK setup (Config):
- *   window.FIREBASE_CONFIG = { apiKey: "...", authDomain: "PROJECT.firebaseapp.com", projectId: "PROJECT", appId: "..." };
- * (These values are public identifiers, not secrets. Security comes from firestore.rules.)
- * The Android build can also fill this in automatically from firebase/google-services.json.
+ * Public client identifiers from Firebase console → Project settings → Your apps → Web app.
+ * These are not secrets. Security comes from firestore.rules.
+ * Tests may set window.FIREBASE_CONFIG before this file runs (including null, to test "coming soon").
  */
-window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || null;
+if (!Object.prototype.hasOwnProperty.call(window, 'FIREBASE_CONFIG')) {
+  window.FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCaJzBwkJRxWU0pw-eaAcT5HvwxbUEbwNw",
+    authDomain: "workoutapprockz.firebaseapp.com",
+    projectId: "workoutapprockz",
+    storageBucket: "workoutapprockz.firebasestorage.app",
+    messagingSenderId: "920075260133",
+    appId: "1:920075260133:web:a330e75bf55c9d64b3440c"
+  };
+}
