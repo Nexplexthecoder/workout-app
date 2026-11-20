@@ -1,8 +1,55 @@
 rules_version = '2';
-// Workout app: each signed-in user can read/write ONLY their own document users/{uid}.
-// Paste into Firebase console → Firestore Database → Rules → Publish.
+// Workout app 1.2.0 security rules.
+// Paste the WHOLE file into Firebase console → Firestore Database → Rules → Publish.
+//
+// users/{uid}          Workout data. Owner only. Staff (trainers / tech / admins) can NOT read it.
+// users_public/{uid}   {email, displayName, emailVerified, updatedAt}. Written by the owner only (email must be the
+//                      signed-in account's email). Readable by the owner and admins only, so staff emails stay private.
+//                      Admins look people up by email here to add them as staff.
+// config/roles         {admins:[uid], trainers:[uid], tech:[uid], numbers:{uid: 1000-9999}, updatedAt}.
+//                      Readable by signed-in users (UIDs + public staff numbers only, no emails). Only admins change it.
+//                      First admin: claimed in the app by the account whose VERIFIED email is adminEmail(),
+//                      and only while config/roles does not exist yet.
+// tickets/{id}         Support tickets. type 'trainer' (routines/exercises) or 'tech' (bugs), fixed at creation.
+//                      Owner + staff for that type (trainers: trainer tickets, tech: tech tickets, admins: all).
+//                      userEmail is stored so staff can see who it is.
+// tickets/{id}/messages  Chat. Staff messages carry only role + senderNumber ("Trainer #4821"), never email/name/uid.
+//                      Messages can't be edited or deleted.
+// tickets/{id}/shared/snapshot  Optional read-only workout snapshot the owner chooses to share.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function adminEmail() { return 'wyatt.va.gm@gmail.com'; }
+    function myEmail() { return request.auth.token.email.lower(); }
+    function rolesPath() { return /databases/$(database)/documents/config/roles; }
+    function roles() { return get(rolesPath()).data; }
+    function hasRoles() { return exists(rolesPath()); }
+    function isAdmin() { return signedIn() && hasRoles() && me() in roles().admins; }
+    // Staff allowed to handle a ticket of this type.
+    function canHandle(type) {
+      return signedIn() && hasRoles() && (
+        me() in roles().admins
+        || (type == 'trainer' && me() in roles().trainers)
+        || (type == 'tech' && me() in roles().tech));
+    }
+    function myNumber() { return roles().numbers[me()]; }
+    function verifiedAdminEmail() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() == adminEmail();
+    }
+    function uidList(l) { return l is list && l.size() <= 50; }
+    function ticketPath(t) { return /databases/$(database)/documents/tickets/$(t); }
+    function ownsTicket(t) { return signedIn() && get(ticketPath(t)).data.uid == me(); }
+    // getAfter: lets "create ticket + first message (+ snapshot)" be one batch
+    function ownsTicketAfter(t) { return signedIn() && getAfter(ticketPath(t)).data.uid == me(); }
+    function ticketType(t) { return get(ticketPath(t)).data.type; }
+
+    // ---------- workout data (unchanged from 1.1) ----------
     match /users/{uid} {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
@@ -11,6 +58,123 @@ service cloud.firestore {
         && request.resource.data.state.size() < 900000
         && request.resource.data.updatedAt is int;
     }
+
+    // ---------- private profile (email) used by the admin's add-by-email ----------
+    match /users_public/{uid} {
+      allow get: if signedIn() && (me() == uid || isAdmin());
+      allow list: if isAdmin() && request.query.limit <= 5;
+      allow create, update: if signedIn() && me() == uid
+        && request.resource.data.keys().hasOnly(['email', 'displayName', 'emailVerified', 'updatedAt'])
+        && request.resource.data.email == myEmail()
+        && request.resource.data.emailVerified == (request.auth.token.email_verified == true)
+        && request.resource.data.displayName is string && request.resource.data.displayName.size() <= 100
+        && request.resource.data.updatedAt is int;
+      allow delete: if signedIn() && me() == uid;
+    }
+
+    // ---------- roles ----------
+    match /config/roles {
+      allow get: if signedIn();
+      // Bootstrap: only while the doc doesn't exist, only the verified admin email, only themselves as admin.
+      allow create: if verifiedAdminEmail()
+        && request.resource.data.keys().hasOnly(['admins', 'trainers', 'tech', 'numbers', 'updatedAt'])
+        && request.resource.data.admins == [me()]
+        && request.resource.data.trainers == []
+        && request.resource.data.tech == []
+        && request.resource.data.numbers is map
+        && request.resource.data.numbers.keys().hasOnly([me()])
+        && request.resource.data.updatedAt is int;
+      allow update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['admins', 'trainers', 'tech', 'numbers', 'updatedAt'])
+        && uidList(request.resource.data.admins) && request.resource.data.admins.size() >= 1
+        && uidList(request.resource.data.trainers)
+        && uidList(request.resource.data.tech)
+        && request.resource.data.numbers is map && request.resource.data.numbers.size() <= 150
+        && request.resource.data.updatedAt is int;
+      allow delete: if false;
+    }
+
+    // ---------- support tickets ----------
+    match /tickets/{t} {
+      function validTicket(d) {
+        return d.keys().hasOnly(['uid', 'userEmail', 'type', 'subject', 'status', 'createdAt', 'updatedAt', 'lastFrom',
+                                 'lastText', 'unreadForUser', 'unreadForSupport', 'appVersion', 'device', 'shareData'])
+          && d.uid is string
+          && d.type in ['trainer', 'tech']
+          && d.subject is string && d.subject.size() >= 1 && d.subject.size() <= 120
+          && d.status in ['open', 'closed']
+          && d.createdAt is int && d.updatedAt is int
+          && d.lastFrom in ['user', 'support']
+          && d.lastText is string && d.lastText.size() <= 200
+          && d.unreadForUser is int && d.unreadForSupport is int
+          && d.appVersion is string && d.appVersion.size() <= 20
+          && d.device is string && d.device.size() <= 200
+          && d.shareData is bool;
+      }
+      function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+      allow read: if signedIn() && (resource.data.uid == me() || canHandle(resource.data.type));
+
+      allow create: if signedIn() && validTicket(request.resource.data)
+        && request.resource.data.uid == me()
+        && request.resource.data.userEmail == myEmail()
+        && request.resource.data.status == 'open'
+        && request.resource.data.lastFrom == 'user'
+        && request.resource.data.unreadForUser == 0;
+
+      // uid, userEmail, type, subject, createdAt, appVersion, device never change after creation.
+      // Owner: reply (lastFrom 'user'), mark own unread read, close/reopen, toggle sharing; can only raise unreadForSupport.
+      // Staff for this type: reply (lastFrom 'support'), mark staff unread read, close/reopen; can only raise unreadForUser.
+      allow update: if signedIn() && validTicket(request.resource.data)
+        && changed().hasOnly(['status', 'updatedAt', 'lastFrom', 'lastText', 'unreadForUser', 'unreadForSupport', 'shareData'])
+        && (
+          (resource.data.uid == me()
+            && (request.resource.data.lastFrom == 'user' || !changed().hasAny(['lastFrom']))
+            && (request.resource.data.unreadForUser == 0 || !changed().hasAny(['unreadForUser']))
+            && request.resource.data.unreadForSupport >= resource.data.unreadForSupport)
+          ||
+          (canHandle(resource.data.type)
+            && !changed().hasAny(['shareData'])
+            && (request.resource.data.lastFrom == 'support' || !changed().hasAny(['lastFrom']))
+            && (request.resource.data.unreadForSupport == 0 || !changed().hasAny(['unreadForSupport']))
+            && request.resource.data.unreadForUser >= resource.data.unreadForUser)
+        );
+
+      allow delete: if isAdmin();
+
+      match /messages/{m} {
+        allow read: if ownsTicket(t) || canHandle(ticketType(t));
+        // user message: {from:'user', text, at}
+        // staff message: {from:'support', role: ticket type, senderNumber: their number from config/roles, text, at}
+        allow create: if signedIn()
+          && request.resource.data.text is string
+          && request.resource.data.text.size() >= 1 && request.resource.data.text.size() <= 4000
+          && request.resource.data.at is int
+          && (
+            (request.resource.data.keys().hasOnly(['from', 'text', 'at'])
+              && request.resource.data.from == 'user' && ownsTicketAfter(t))
+            ||
+            (request.resource.data.keys().hasOnly(['from', 'role', 'senderNumber', 'text', 'at'])
+              && request.resource.data.from == 'support'
+              && canHandle(ticketType(t))
+              && request.resource.data.role == ticketType(t)
+              && request.resource.data.senderNumber == myNumber())
+          );
+        allow update, delete: if false;
+      }
+
+      // Read-only (for staff) workout snapshot the ticket owner chose to share.
+      match /shared/{doc} {
+        allow read: if ownsTicket(t) || canHandle(ticketType(t));
+        allow create, update: if ownsTicketAfter(t)
+          && request.resource.data.keys().hasOnly(['state', 'at'])
+          && request.resource.data.state is string
+          && request.resource.data.state.size() < 900000
+          && request.resource.data.at is int;
+        allow delete: if ownsTicket(t);
+      }
+    }
+
     // Everything else is closed.
     match /{document=**} {
       allow read, write: if false;

@@ -16,7 +16,7 @@
 <script>
 /* ===== CONFIG: GitHub repo that receives feedback issues (OWNER/REPO) ===== */
 const FEEDBACK_REPO = 'Nexplexthecoder/workout-app';
-const APP_VERSION = '1.1.2';
+const APP_VERSION = '1.2.0';
 /* Auto-update: the installed Android app checks this repo's GitHub releases for a newer Workout-X.Y.Z.apk */
 const UPDATE_REPO = 'Nexplexthecoder/workout-app';
 </script>
@@ -89,7 +89,7 @@ input[type=checkbox]{width:22px;height:22px;min-height:0;accent-color:var(--acc)
 .setbtn.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .timer{font-size:56px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 .prog{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin:6px 0 16px} .prog i{display:block;height:100%;background:var(--acc)}
-.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:40;max-width:90%;text-align:center}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:40;max-width:90%;text-align:center}
 .banner{background:var(--accs);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:8px}
 .empty{text-align:center;color:var(--mut);padding:28px 10px}
 h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:18px 4px 8px}
@@ -112,6 +112,20 @@ a{color:var(--acc)}
 .it .t.tap{cursor:pointer}
 .btn.startbig{min-height:58px;font-size:18px;border-radius:14px}
 .btn.startbig svg{width:22px;height:22px}
+/* 1.2.0 support */
+#moreBtn{position:relative}
+.badge{position:absolute;top:4px;right:2px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e5484d;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.badge.in{position:static}
+.udot{width:9px;height:9px;border-radius:50%;background:#e5484d;flex:none}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it.tk{cursor:pointer}
+.tag.tech{background:#3b82f61f;color:#3b82f6}
+.tag.st{background:var(--line);color:var(--mut)} .tag.st.open{background:#16a34a1f;color:var(--ok)}
+.msgs{display:flex;flex-direction:column;gap:8px;max-height:46vh;min-height:120px;overflow:auto;padding:8px 2px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.bub{max-width:82%;align-self:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:8px 12px}
+.bub.me{align-self:flex-end;background:var(--acc);border-color:var(--acc);color:#fff;border-radius:14px 14px 4px 14px}
+.bub .who{font-size:12px;font-weight:700;opacity:.8;margin-bottom:2px} .bub .tx{white-space:pre-wrap;word-wrap:break-word} .bub .when{font-size:11px;opacity:.7;margin-top:3px;text-align:right}
+.composer{display:flex;gap:8px;margin-top:10px;align-items:flex-end} .composer textarea{min-height:48px;height:48px;flex:1}
 </style>
 </head>
 <body>
@@ -132,6 +146,8 @@ const I={
  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>',
  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 15l6-6 6 6"/></svg>',
  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+ help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.4M12 17h.01"/></svg>',
  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
  grip:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
  w:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 8v8M3.5 10v4M18 8v8M20.5 10v4M6 12h12"/></svg>',
@@ -276,7 +292,7 @@ function sheet(html,onMount){
   bg.addEventListener('click',e=>{if(e.target===bg)closeSheet()});
   document.body.appendChild(bg);onMount&&onMount(bg.firstChild);return bg.firstChild;
 }
-function closeSheet(){closeSheet2();const s=$('#sheet');if(s){s.querySelectorAll('video').forEach(v=>v.pause());s.remove()}revokeUrls();setTimeout(()=>Sync.applyDeferred(),0)}
+function closeSheet(){closeSheet2();Support.closeView();const s=$('#sheet');if(s){s.querySelectorAll('video').forEach(v=>v.pause());s.remove()}revokeUrls();setTimeout(()=>Sync.applyDeferred(),0)}
 function sheet2(html,onMount){
   closeSheet2();
   const bg=document.createElement('div');bg.className='sheet-bg l2';bg.id='sheet2';
@@ -319,6 +335,7 @@ function render(){
   $('#hdr').innerHTML=`<div class="hdr-r">${tab==='rt'?`<button class="ib" aria-label="New routine" onclick="editRoutine()">${I.plus}</button>`:''}${acc}<button class="ib" aria-label="More" id="moreBtn" onclick="moreSheet()">${I.more}</button></div>`;
   $('#tabs').innerHTML=[['today','Today',I.today],['cal','Calendar',I.cal],['rt','Routines',I.list]].map(([k,l,s])=>`<button class="tab ${tab===k?'on':''}" data-tab="${k}" onclick="go('${k}')">${s}<span>${l}</span></button>`).join('');
   ({today:rToday,cal:rCal,rt:rRoutines})[tab]();
+  Support.refresh();
 }
 function go(t){tab=t;window.scrollTo(0,0);render()}
 
@@ -630,6 +647,7 @@ function moreSheet(){
   sheet(`<h2>More</h2>
    <div class="list">
     <div class="it" style="cursor:pointer" id="mAccount" onclick="accountSheet()">${I.user.replace('<svg','<svg width="22" height="22"')}<div class="sp"><div class="t">${u?esc(ACC.email||ACC.name||'Account'):'Guest'}</div><div class="small mut">${u?'Signed in · syncs across your devices':'Data stays on this phone only'}</div></div></div>
+    <div class="it" style="cursor:pointer" id="mHelp" onclick="helpSheet()">${I.help.replace('<svg','<svg width="22" height="22"')}<div class="sp"><div class="t">Help &amp; support</div><div class="small mut">${u?'Chat with a trainer or tech support':'Sign in to chat with support'}</div></div>${Support.badge()?`<span class="badge in" id="mHelpBadge">${Support.badge()}</span>`:''}</div>
     <div class="it" style="cursor:pointer" id="mFeedback" onclick="feedbackSheet()"><div class="sp"><div class="t">Send feedback</div><div class="small mut">Bug, idea or anything else</div></div></div>
     <div class="it" style="cursor:pointer" id="mUpdate" onclick="Updater.check(true)"><div class="sp"><div class="t">Check for updates</div><div class="small mut">Version ${APP_VERSION}</div></div></div>
     <div class="it" style="cursor:pointer" id="mExport" onclick="exportData()"><div class="sp"><div class="t">Export backup</div><div class="small mut">Download a .json file</div></div></div>
@@ -775,7 +793,7 @@ const Accounts={
     if(!this.B)return;
     const u=await this.B.init().catch(()=>null);
     if(ACC?.mode==='user'){
-      if(u&&u.uid===ACC.uid){Sync.signedIn=true;Sync.run('open')}
+      if(u&&u.uid===ACC.uid){Sync.signedIn=true;Sync.run('open');Support.start(u)}
       else{toast('You were signed out. Sign in again to sync.');await leaveAccount(true)}
     }
     if($('#welcome'))drawWelcome();
@@ -801,7 +819,7 @@ async function enterAccount(u,carry){
   if(moved){const g=seed();localStorage.setItem(GUEST_KEY,JSON.stringify(g))} // guest data now lives in the account
   Sync.signedIn=true;Sync.err='';$('#welcome')?.remove();closeSheet();tab='today';render();
   toast(moved?'Signed in · your guest data is now in your account':'Signed in as '+(u.email||u.name||'you'));
-  Sync.run('signin');
+  Sync.run('signin');Support.start(u);
 }
 function askCarry(){return new Promise(res=>{sheet2(`<h2>Bring your data?</h2><p class="mut">This phone has routines or history from guest mode. Move them into your new account so they sync to your other devices?</p>
   <button class="btn p w" id="carryYes">Yes, bring them</button><button class="btn w" style="margin-top:8px" id="carryNo">No, start fresh</button>`,r=>{
@@ -813,6 +831,7 @@ async function leaveAccount(silent){
     if(Sync.meta().dirty){await Sync.run('signout');if(Sync.meta().dirty&&!confirm('Some changes haven\'t synced yet (offline?). Sign out anyway and lose them?'))return}
     try{await Accounts.B?.signOut()}catch(e){}
   }
+  Support.stop();
   localStorage.removeItem(USER_KEY(uid));localStorage.removeItem(META_KEY(uid));
   const f=S.feedbackQueue;setAcc({mode:'guest'});Sync.signedIn=false;S=migrate(readJSON(GUEST_KEY)||seed());S.feedbackQueue=f;persist();
   closeSheet();render();if(!silent)toast('Signed out · back in guest mode');
@@ -823,6 +842,7 @@ function accountSheet(){
      <p class="small" id="syncStatus"></p>
      <p class="small mut">Your routines, schedule, cheat &amp; rest days, history and video links sync to every device you sign in on. Uploaded video files stay on the phone they were added on.</p>
      <button class="btn w" id="syncNow" onclick="Sync.run('manual')">Sync now</button>
+     <button class="btn w" style="margin-top:8px" id="accHelp" onclick="helpSheet()">Help &amp; support</button>
      <button class="btn w d" style="margin-top:8px" id="signOut" onclick="leaveAccount()">Sign out</button>`);Sync.status();return;
   }
   sheet(`<h2>Account</h2><div class="card row">${I.user.replace('<svg','<svg width="32" height="32"')}<div class="sp"><div class="t">Guest</div><div class="small mut">Data stays on this phone only and won't sync to other devices.</div></div></div>
@@ -945,6 +965,210 @@ const Updater={
     this.check(false);
   },
 };
+
+/* ---------- customer support (1.2.0): tickets + chat, trainers / tech / admin ---------- */
+// Layout + security: firestore.rules. Staff emails are never shown to users (they see "Trainer #4821" / "Support #1093").
+const ADMIN_EMAIL='wyatt.va.gm@gmail.com'; // only decides whether to SHOW "Set up admin"; the rules enforce it
+const TYPE_NAME={trainer:'Trainer',tech:'Technical support'};
+const TYPE_DESC={trainer:'Help with routines and exercises',tech:'Bugs and app problems'};
+const Support={
+  me:null,roles:undefined,mine:[],staff:[],subs:[],staffSub:null,staffKey:'',view:null,viewSubs:[],err:'',
+  api(){return Accounts.B&&Accounts.B.support||null},
+  on(){return ACC?.mode==='user'&&!!this.api()&&Sync.signedIn},
+  start(u){
+    this.stop();const api=this.api();if(!api||!u)return;this.me=u;
+    api.publishProfile(u).catch(e=>console.warn('profile',e));
+    this.subs.push(api.watchRoles(r=>{this.roles=r;this.updateStaff();this.refresh()},e=>{this.err=e.message;this.roles=undefined;this.refresh()}));
+    this.subs.push(api.watchMyTickets(u.uid,l=>{this.mine=l;this.refresh()},e=>{this.err=e.message;this.refresh()}));
+  },
+  stop(){this.closeView();this.subs.forEach(f=>{try{f()}catch(e){}});this.subs=[];if(this.staffSub){try{this.staffSub()}catch(e){}}this.staffSub=null;this.staffKey='';this.roles=undefined;this.mine=[];this.staff=[];this.me=null;this.refresh()},
+  uid(){return this.me&&this.me.uid},
+  isAdmin(){return !!(this.roles&&(this.roles.admins||[]).includes(this.uid()))},
+  types(){const r=this.roles,u=this.uid();if(!r||!u)return [];if(this.isAdmin())return ['trainer','tech'];return ['trainer','tech'].filter(t=>((t==='trainer'?r.trainers:r.tech)||[]).includes(u))},
+  isStaff(){return this.types().length>0},
+  number(){return this.roles&&this.roles.numbers&&this.roles.numbers[this.uid()]||null},
+  canClaim(){return this.roles===null&&!!this.me&&String(this.me.email||'').toLowerCase()===ADMIN_EMAIL},
+  updateStaff(){
+    const key=this.isAdmin()?'all':this.types().join(',');if(key===this.staffKey)return;
+    if(this.staffSub){try{this.staffSub()}catch(e){}}this.staffSub=null;this.staff=[];this.staffKey=key;
+    if(key)this.staffSub=this.api().watchStaffTickets(key==='all'?{all:true}:{types:this.types()},l=>{this.staff=l;this.refresh()},e=>{this.err=e.message;this.refresh()});
+  },
+  userUnread(){return this.mine.reduce((n,t)=>n+(t.unreadForUser||0),0)},
+  staffUnread(){return this.staff.filter(t=>t.status==='open'&&(t.unreadForSupport||0)>0).length},
+  badge(){return this.on()?this.userUnread()+this.staffUnread():0},
+  refresh(){
+    const b=$('#moreBtn');if(b){let s=b.querySelector('.badge');const n=this.badge();if(n){if(!s){s=document.createElement('span');s.className='badge';b.appendChild(s)}s.textContent=n>9?'9+':n}else s&&s.remove()}
+    const v=this.view;if(v&&v.redraw)v.redraw();
+  },
+  closeView(){this.viewSubs.forEach(f=>{try{f()}catch(e){}});this.viewSubs=[];this.view=null},
+  setView(name,redraw){this.closeView();this.view={name,redraw};},
+};
+const byNew=l=>[...l].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+const ago=ms=>{const s=(Date.now()-ms)/1000;if(s<60)return 'now';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';return new Date(ms).toLocaleDateString([], {month:'short',day:'numeric'})};
+const staffLabel=m=>`${m.role==='trainer'?'Trainer':'Support'} #${m.senderNumber}`;
+const supportDevice=()=>{const ua=navigator.userAgent,m=ua.match(/\(([^)]+)\)/);return `${NATIVE_APP?'Android app':'Web'} · ${m?m[1]:ua.slice(0,80)} · ${screen.width}x${screen.height}`.slice(0,200)};
+const tagT=t=>`<span class="tag ${t.type}">${t.type==='trainer'?'Trainer':'Tech'}</span>`;
+const tagS=t=>`<span class="tag st ${t.status}">${t.status==='open'?'Open':'Closed'}</span>`;
+function ticketRow(t,staff){
+  const un=staff?(t.unreadForSupport||0)>0&&t.status==='open':(t.unreadForUser||0)>0;
+  return `<div class="it tk" data-t="${esc(t.id)}" onclick="threadSheet('${esc(t.id)}',${staff})"><div class="sp" style="min-width:0"><div class="t row" style="gap:6px">${un?'<span class="udot" aria-label="Unread"></span>':''}<span class="ell">${esc(t.subject)}</span></div>
+   <div class="small mut ell">${staff?esc(t.userEmail)+' · ':''}${t.lastFrom==='support'?(staff?'Staff: ':'Reply: '):''}${esc(t.lastText||'')}</div></div>
+   <div style="text-align:right">${tagT(t)}<div class="small mut" style="margin-top:4px">${tagS(t)} ${ago(t.updatedAt)}</div></div></div>`;
+}
+function helpSheet(){
+  if(ACC?.mode!=='user'){
+    sheet(`<h2>Help &amp; support</h2><div class="card" id="helpGuest"><div class="t">Sign in to chat with us</div><p class="small mut" style="margin:6px 0 0">Support chats are linked to your account so you can see replies on any device. You can also send feedback on GitHub without an account.</p></div>
+     ${Accounts.configured?`<button class="btn p w" id="helpSignIn" onclick="authSheet('signin')">Sign in</button><button class="btn w" style="margin-top:8px" onclick="authSheet('signup')">Create account</button>`:''}
+     <button class="btn w g" style="margin-top:8px" id="helpGithub" onclick="feedbackSheet()">Send feedback on GitHub instead</button>
+     <button class="btn w g" onclick="closeSheet()">Close</button>`);return}
+  sheet(`<h2>Help &amp; support</h2><div id="helpBody">${helpBody()}</div><button class="btn w g" style="margin-top:6px" onclick="closeSheet()">Close</button>`);
+  Support.view={name:'help',redraw:()=>{if($('#helpBody'))$('#helpBody').innerHTML=helpBody()}};
+}
+function helpBody(){
+  if(!Support.api())return `<p class="mut">Support chat isn't available in this build. <a href="#" onclick="feedbackSheet();return false">Send feedback</a> instead.</p>`;
+  if(!Sync.signedIn)return `<p class="mut">Connecting to your account…</p>`;
+  let h='';
+  if(Support.canClaim()){
+    const v=Support.me.emailVerified;
+    h+=`<div class="card" id="claimCard"><div class="t">Set up admin</div><p class="small mut" style="margin:6px 0 10px">No admin exists yet. Your account email is on the admin list, so you can become the admin. This only works once.</p>
+     ${v?`<button class="btn p w" id="claimAdmin" onclick="claimAdmin()">Become admin</button>`:`<p class="small">Verify your email first.</p><button class="btn w" id="sendVerify" onclick="sendVerify()">Send verification email</button><button class="btn w g" id="checkVerify" onclick="checkVerify()">I've verified it</button>`}</div>`;
+  }
+  if(Support.isStaff()){
+    const n=Support.staffUnread();
+    h+=`<div class="list card" style="padding:0 16px"><div class="it" style="cursor:pointer" id="hInbox" onclick="inboxSheet()"><div class="sp"><div class="t">Support inbox</div><div class="small mut">${Support.isAdmin()?'Admin · all tickets':Support.types().map(t=>TYPE_NAME[t]).join(' + ')} · you appear as ${Support.types().map(t=>staffLabel({role:t,senderNumber:Support.number()})).join(' / ')}</div></div>${n?`<span class="badge in">${n}</span>`:''}</div>
+     ${Support.isAdmin()?`<div class="it" style="cursor:pointer" id="hTeam" onclick="teamSheet()"><div class="sp"><div class="t">Manage support team</div><div class="small mut">Add or remove trainers and tech support by email</div></div></div>`:''}</div>`;
+  }
+  h+=`<button class="btn p w" id="newTicket" onclick="newTicketSheet()">${I.plus} New request</button>`;
+  const l=byNew(Support.mine);
+  h+=l.length?`<h3>Your requests</h3><div class="list" id="myTickets">${l.map(t=>ticketRow(t,false)).join('')}</div>`
+    :`<p class="small mut" style="text-align:center;margin:14px 0 4px" id="noTickets">No requests yet. Ask a trainer about your routines, or report a bug to tech support.</p>`;
+  if(Support.err)h+=`<p class="err">${esc(Support.err)}</p>`;
+  return h;
+}
+async function claimAdmin(){const b=$('#claimAdmin');if(b)b.disabled=true;
+  try{await Support.api().claimAdmin();toast('You are now the admin')}catch(e){toast(e.message);if(b)b.disabled=false}}
+async function sendVerify(){try{await Accounts.B.sendVerification();toast('Verification email sent. Open the link, then tap "I\'ve verified it".')}catch(e){toast(e.message)}}
+async function checkVerify(){try{const u=await Accounts.B.refreshUser();if(u){Support.me={...Support.me,...u};Support.api().publishProfile(u).catch(()=>{})}
+  toast(u&&u.emailVerified?'Email verified':'Not verified yet. Open the link in the email first.');Support.refresh()}catch(e){toast(e.message)}}
+function newTicketSheet(type){
+  Support.closeView();type=type||'trainer';
+  sheet(`<h2>New request</h2>
+   <div class="seg" id="tkType"><button data-t="trainer" class="${type==='trainer'?'on':''}">Trainer</button><button data-t="tech" class="${type==='tech'?'on':''}">Technical support</button></div>
+   <p class="small mut" id="tkTypeDesc" style="margin:-4px 0 12px">${TYPE_DESC[type]}</p>
+   <label class="f"><span>Subject</span><input id="tkSubject" maxlength="120" placeholder="Short summary"></label>
+   <label class="f"><span>Message</span><textarea id="tkMsg" maxlength="4000" placeholder="How can we help?"></textarea></label>
+   <label class="row" style="margin-bottom:6px;min-height:44px"><input type="checkbox" id="tkShare"> <span>Share my workout data with support</span></label>
+   <p class="small mut" style="margin:0 0 14px">Sends a read-only copy of your routines, schedule and history with this request. App version ${APP_VERSION} and device info are attached automatically.</p>
+   <p class="err" id="tkErr"></p>
+   <button class="btn p w" id="tkSend">Send</button><button class="btn w g" style="margin-top:4px" onclick="helpSheet()">Back</button>`,r=>{
+    const seg=r.querySelector('#tkType');seg.onclick=e=>{const b=e.target.closest('button');if(!b)return;seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));r.querySelector('#tkTypeDesc').textContent=TYPE_DESC[b.dataset.t]};
+    r.querySelector('#tkSend').onclick=async()=>{
+      const subject=r.querySelector('#tkSubject').value.trim(),text=r.querySelector('#tkMsg').value.trim(),err=r.querySelector('#tkErr');
+      if(!subject||!text){err.textContent='Add a subject and a message.';return}
+      if(!navigator.onLine){err.textContent='You\'re offline. Connect to send your request.';return}
+      const btn=r.querySelector('#tkSend');btn.disabled=true;btn.textContent='Sending…';
+      try{const id=await Support.api().createTicket({type:seg.querySelector('.on').dataset.t,subject,text,appVersion:APP_VERSION,device:supportDevice(),snapshot:r.querySelector('#tkShare').checked?JSON.stringify(stripLocal(S)):null});
+        toast('Request sent');threadSheet(id,false)}
+      catch(e){err.textContent=e.message;btn.disabled=false;btn.textContent='Send'}};
+  });
+}
+function threadSheet(id,staff){
+  let T=null,M=[];
+  const root=sheet(`<div class="row" style="margin-bottom:6px"><button class="ib" aria-label="Back" id="thBack" onclick="${staff?'inboxSheet()':'helpSheet()'}">${I.back||'‹'}</button><h2 class="sp ell" id="thSubject" style="margin:0">Loading…</h2></div>
+    <div id="thMeta" class="small mut" style="margin:0 0 8px"></div><div id="thTools"></div>
+    <div class="msgs" id="thMsgs"><div class="mut small">Loading…</div></div>
+    <div class="composer"><textarea id="thText" maxlength="4000" placeholder="${staff?'Reply to this member':'Write a message'}"></textarea><button class="btn p" id="thSend" aria-label="Send">Send</button></div>
+    <p class="err" id="thErr"></p>`);
+  const q=s=>root.querySelector(s);
+  const mine=m=>staff?(m.from==='support'&&m.senderNumber===Support.number()):m.from==='user';
+  const who=m=>m.from==='user'?(staff?T&&T.userEmail||'Member':'You'):(staff&&mine(m)?'You · '+staffLabel(m):staffLabel(m));
+  const drawMsgs=()=>{const box=q('#thMsgs');if(!box)return;const atEnd=box.scrollHeight-box.scrollTop-box.clientHeight<60;
+    box.innerHTML=M.map(m=>`<div class="bub ${mine(m)?'me':''} ${m.from}"><div class="who">${esc(who(m))}</div><div class="tx">${esc(m.text)}</div><div class="when">${m.pending?'Sending…':new Date(m.at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div>`).join('')||'<div class="mut small">No messages.</div>';
+    if(atEnd||!box.dataset.d){box.scrollTop=box.scrollHeight;box.dataset.d=1}};
+  const drawHead=()=>{if(!T||!q('#thSubject'))return;q('#thSubject').textContent=T.subject;
+    q('#thMeta').innerHTML=`${tagT(T)} ${tagS(T)} ${staff?`· <b id="thEmail">${esc(T.userEmail)}</b>`:`· ${TYPE_NAME[T.type]}`}<br>App ${esc(T.appVersion)} · ${esc(T.device)}`;
+    q('#thTools').innerHTML=`<div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">
+      ${staff?(T.shareData?`<button class="btn s" id="thViewData" onclick="sharedSheet('${esc(T.id)}')">View shared workout data</button>`:'<span class="small mut">Workout data not shared</span>')
+        :`<label class="row small" style="min-height:36px;gap:8px"><input type="checkbox" id="thShare" ${T.shareData?'checked':''}> Share my workout data with support</label>`}
+      <span class="sp"></span><button class="btn s" id="thStatus">${T.status==='open'?'Close ticket':'Reopen'}</button></div>`;
+    const sh=q('#thShare');if(sh)sh.onchange=async()=>{sh.disabled=true;try{await Support.api().share(T.id,sh.checked?JSON.stringify(stripLocal(S)):null);toast(sh.checked?'Workout data shared (read-only)':'Stopped sharing')}catch(e){toast(e.message);sh.checked=!sh.checked}finally{sh.disabled=false}};
+    q('#thStatus').onclick=async()=>{try{await Support.api().setStatus(T.id,T.status==='open'?'closed':'open')}catch(e){toast(e.message)}};
+    const unread=staff?(T.unreadForSupport||0):(T.unreadForUser||0);if(unread>0)Support.api().markRead(T.id,staff?'support':'user').catch(()=>{});};
+  Support.setView('thread',null);
+  const api=Support.api();
+  Support.viewSubs.push(api.watchTicket(id,t=>{T=t;if(!t){q('#thSubject').textContent='Ticket not found';return}drawHead();drawMsgs()},e=>{q('#thErr').textContent=e.message}));
+  Support.viewSubs.push(api.watchMessages(id,l=>{M=l;drawMsgs()},e=>{q('#thErr').textContent=e.message}));
+  const send=async()=>{const ta=q('#thText'),text=ta.value.trim();if(!text||!T)return;
+    if(staff&&!Support.number()){q('#thErr').textContent='You no longer have a support role.';return}
+    ta.value='';q('#thErr').textContent='';
+    try{await api.send(T,text,staff?{number:Support.number()}:'user')}catch(e){ta.value=text;q('#thErr').textContent=e.message}};
+  q('#thSend').onclick=send;
+}
+let inboxState={status:'open',type:'all'};
+function inboxSheet(){
+  if(!Support.isStaff()){helpSheet();return}
+  const types=Support.types();if(types.length===1)inboxState.type=types[0];
+  sheet(`<div class="row" style="margin-bottom:6px"><button class="ib" aria-label="Back" onclick="helpSheet()">${I.back||'‹'}</button><h2 class="sp" style="margin:0">Support inbox</h2></div>
+    <div class="seg" id="ibStatus"><button data-s="open">Open</button><button data-s="closed">Closed</button></div>
+    ${types.length>1?`<div class="chips" id="ibType">${[['all','All'],['trainer','Trainer'],['tech','Technical']].map(([k,l])=>`<button class="chip" data-k="${k}">${l}</button>`).join('')}</div>`:`<p class="small mut" style="margin:-4px 0 8px">${TYPE_NAME[types[0]]} tickets</p>`}
+    <div class="list" id="ibList"></div><button class="btn w g" style="margin-top:6px" onclick="closeSheet()">Close</button>`,r=>{
+    r.querySelector('#ibStatus').onclick=e=>{const b=e.target.closest('button');if(b){inboxState.status=b.dataset.s;draw()}};
+    const ty=r.querySelector('#ibType');if(ty)ty.onclick=e=>{const b=e.target.closest('button');if(b){inboxState.type=b.dataset.k;draw()}};
+  });
+  const draw=()=>{const l=$('#ibList');if(!l)return;
+    $('#ibStatus').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.s===inboxState.status));
+    $('#ibType')?.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k===inboxState.type));
+    const list=byNew(Support.staff).filter(t=>t.status===inboxState.status&&(inboxState.type==='all'||t.type===inboxState.type));
+    l.innerHTML=list.map(t=>ticketRow(t,true)).join('')||`<div class="empty" id="ibEmpty">No ${inboxState.status} tickets.</div>`};
+  Support.view={name:'inbox',redraw:draw};draw();
+}
+function teamSheet(){
+  if(!Support.isAdmin()){helpSheet();return}
+  const emails={};
+  sheet(`<div class="row" style="margin-bottom:6px"><button class="ib" aria-label="Back" onclick="helpSheet()">${I.back||'‹'}</button><h2 class="sp" style="margin:0">Support team</h2></div>
+    <p class="small mut" style="margin-top:0">Type the email of someone who has a Workout account. Members never see staff emails, only numbers like Trainer #4821.</p>
+    <label class="f"><span>Email</span><input id="tmEmail" type="email" autocomplete="off" placeholder="name@example.com"></label>
+    <div class="row" style="gap:16px;margin:0 0 12px"><label class="row" style="gap:8px;min-height:44px"><input type="checkbox" id="tmTrainer" checked> Trainer</label><label class="row" style="gap:8px;min-height:44px"><input type="checkbox" id="tmTech"> Tech support</label></div>
+    <p class="err" id="tmErr"></p>
+    <div class="g2"><button class="btn p" id="tmAdd">Add</button><button class="btn" id="tmRemove">Remove</button></div>
+    <h3>Team</h3><div class="list" id="tmList"></div><button class="btn w g" style="margin-top:6px" onclick="closeSheet()">Close</button>`,r=>{
+    const q=s=>r.querySelector(s),err=q('#tmErr');
+    const act=async(add)=>{err.textContent='';const email=q('#tmEmail').value.trim().toLowerCase();
+      if(!/^\S+@\S+\.\S+$/.test(email)){err.textContent='Type a valid email.';return}
+      const types=add?[q('#tmTrainer').checked&&'trainer',q('#tmTech').checked&&'tech'].filter(Boolean):[];
+      if(add&&!types.length){err.textContent='Pick Trainer, Tech support or both.';return}
+      const btn=q(add?'#tmAdd':'#tmRemove');btn.disabled=true;
+      try{const p=await Support.api().findByEmail(email);
+        if(!p){err.textContent='No account with that email. Ask them to sign in to the app once, then try again.';return}
+        if((Support.roles.admins||[]).includes(p.uid)&&!add){err.textContent='That\'s an admin account.';return}
+        emails[p.uid]=p.email;const n=await Support.api().setStaff(p.uid,types);
+        toast(add?`${email} added as ${types.map(t=>t==='trainer'?'Trainer':'Tech').join(' + ')} · #${n}`:`${email} removed from support`);
+        if(add&&!p.emailVerified)toast('Note: that account\'s email isn\'t verified');
+        q('#tmEmail').value='';}
+      catch(e){err.textContent=e.message}finally{btn.disabled=false}};
+    q('#tmAdd').onclick=()=>act(true);q('#tmRemove').onclick=()=>act(false);
+  });
+  const draw=()=>{const l=$('#tmList');if(!l||!Support.roles)return;const r=Support.roles;
+    const ids=[...new Set([...(r.admins||[]),...(r.trainers||[]),...(r.tech||[])])];
+    l.innerHTML=ids.map(u=>{const tags=[(r.admins||[]).includes(u)&&'Admin',(r.trainers||[]).includes(u)&&'Trainer',(r.tech||[]).includes(u)&&'Tech'].filter(Boolean);
+      return `<div class="it tm" data-u="${esc(u)}"><div class="sp" style="min-width:0"><div class="t ell">${esc(emails[u]||'…')}</div><div class="small mut">#${esc(String(r.numbers?.[u]||'?'))} · ${tags.map(t=>`<span class="tag">${t}</span>`).join(' ')}</div></div>
+       ${(r.admins||[]).includes(u)?'':`<button class="ib" aria-label="Remove" onclick="teamRemove('${esc(u)}')">${I.x}</button>`}</div>`}).join('')||'<div class="empty">No one yet.</div>';
+    ids.filter(u=>!emails[u]).forEach(u=>Support.api().profile(u).then(p=>{emails[u]=p?p.email:'(no profile)';draw()}).catch(()=>{emails[u]='(unknown)';draw()}));};
+  Support.view={name:'team',redraw:draw};draw();
+}
+async function teamRemove(uid){if(!confirm('Remove this person from the support team?'))return;try{await Support.api().setStaff(uid,[]);toast('Removed')}catch(e){toast(e.message)}}
+async function sharedSheet(id){
+  sheet2(`<h2>Shared workout data</h2><p class="small mut" style="margin-top:-8px">Read-only copy the member shared with this ticket.</p><div id="shBody" class="mut">Loading…</div><button class="btn w" style="margin-top:10px" onclick="closeSheet2()">Close</button>`);
+  try{const d=await Support.api().readShared(id);const b=$('#shBody');if(!b)return;
+    if(!d){b.textContent='Nothing shared (the member may have stopped sharing).';return}
+    const s=JSON.parse(d.state||'{}'),rts=s.routines||[],hist=Object.entries(s.history||{}).sort((a,b)=>b[0].localeCompare(a[0]));
+    const ex=e=>`${esc(e.name)} — ${e.sets||'?'} × ${e.mode==='time'?(e.secs||'?')+'s':(e.reps||'?')+' reps'}${e.weight?' · '+esc(e.weight):''}`;
+    b.classList.remove('mut');
+    b.innerHTML=`<div class="small mut">Shared ${new Date(d.at).toLocaleString()}</div><h3>Routines (${rts.length})</h3>${rts.map(r=>`<div class="card"><div class="t">${esc(r.name)}</div><div class="small">${(r.items||[]).map(ex).join('<br>')||'<span class="mut">No exercises</span>'}</div></div>`).join('')||'<p class="mut small">No routines.</p>'}
+      <h3>Schedule</h3><p class="small">${esc(s.schedule?.mode||'—')}${s.schedule?.mode==='interval'?' · every '+s.schedule.interval+' day(s)':''}</p>
+      <h3>Recent workouts (${hist.length})</h3><div class="small">${hist.slice(0,10).map(([d,h])=>`${esc(d)} · ${esc(h.name||'Workout')} · ${h.sets||0}/${h.totalSets||0} sets`).join('<br>')||'<span class="mut">None yet.</span>'}</div>`;
+  }catch(e){const b=$('#shBody');if(b)b.textContent=e.message}
+}
 
 /* ---------- day rollover & boot ---------- */
 let lastDay=todayS();
